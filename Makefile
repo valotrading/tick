@@ -26,7 +26,6 @@ endif
 
 EXTRA_WARNINGS := -Wbad-function-cast
 EXTRA_WARNINGS += -Wdeclaration-after-statement
-EXTRA_WARNINGS += -Wformat-nonliteral
 EXTRA_WARNINGS += -Wformat-security
 EXTRA_WARNINGS += -Wformat-y2k
 EXTRA_WARNINGS += -Winit-self
