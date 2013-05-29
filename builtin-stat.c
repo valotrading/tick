@@ -105,9 +105,9 @@ static void print_stat(u8 msg_type, const char *name)
 	fprintf(stdout, "%'14.0f  %s\n", (double) stats[msg_type], name);
 }
 
-static void print_progress(struct buffer *comp_buf, unsigned long size)
+static void print_progress(struct buffer *buf)
 {
-	fprintf(stderr, "Processing messages: %3u%%\r", (unsigned int)(comp_buf->start * 100 / size));
+	fprintf(stderr, "Processing messages: %3u%%\r", (unsigned int)(buf->start * 100 / buf->capacity));
 
 	fflush(stderr);
 }
@@ -182,7 +182,7 @@ retry_size:
 			if (!nr)
 				break;
 
-			print_progress(comp_buf, st.st_size);
+			print_progress(comp_buf);
 
 			goto retry_size;
 		}
@@ -208,7 +208,7 @@ retry_message:
 			if (!nr)
 				break;
 
-			print_progress(comp_buf, st.st_size);
+			print_progress(comp_buf);
 
 			goto retry_message;
 		}
@@ -226,7 +226,7 @@ retry_LF:
 			if (!nr)
 				break;
 
-			print_progress(comp_buf, st.st_size);
+			print_progress(comp_buf);
 
 			goto retry_LF;
 		}
@@ -311,7 +311,7 @@ retry_size:
 			if (!nr)
 				break;
 
-			print_progress(comp_buf, st.st_size);
+			print_progress(comp_buf);
 
 			goto retry_size;
 		}
@@ -332,7 +332,7 @@ retry_message:
 			if (!nr)
 				break;
 
-			print_progress(comp_buf, st.st_size);
+			print_progress(comp_buf);
 
 			goto retry_message;
 		}
