@@ -69,7 +69,9 @@ INST_PROGRAMS = tick
 
 PROGRAMS = tick
 
+BUILTIN_OBJS += bats-pitch112.o
 BUILTIN_OBJS += builtin-stat.o
+BUILTIN_OBJS += nasdaq-itch41.o
 
 #
 # Build rules

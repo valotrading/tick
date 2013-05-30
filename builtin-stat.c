@@ -3,7 +3,10 @@
 #include "libtrading/read-write.h"
 #include "libtrading/buffer.h"
 
+#include "bats-pitch112.h"
+#include "nasdaq-itch41.h"
 #include "builtins.h"
+#include "stream.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -150,9 +153,10 @@ static void bats_pitch112_print_stats(void)
 	printf("\n");
 }
 
-static void bats_pitch112_process(int fd, z_stream *stream)
+static void bats_pitch112_process(int fd, z_stream *zstream)
 {
 	struct buffer *comp_buf, *uncomp_buf;
+	struct stream stream;
 	struct stat st;
 
 	if (fstat(fd, &st) < 0)
@@ -162,84 +166,29 @@ static void bats_pitch112_process(int fd, z_stream *stream)
 	if (!comp_buf)
 		error("%s: %s: %s\n", program, filename, strerror(errno));
 
-	stream->next_in = (void *) buffer_start(comp_buf);
+	zstream->next_in = (void *) buffer_start(comp_buf);
 
 	uncomp_buf = buffer_new(BUFFER_SIZE);
 	if (!uncomp_buf)
 		error("%s: %s\n", program, strerror(errno));
 
+	stream = (struct stream) {
+		.zstream	= zstream,
+		.uncomp_buf	= uncomp_buf,
+		.comp_buf	= comp_buf,
+		.progress	= print_progress,
+	};
+
 	for (;;) {
 		struct pitch_message *msg;
-		unsigned char ch;
+		int err;
 
-retry_size:
-		if (buffer_size(uncomp_buf) < sizeof(u8) + sizeof(struct pitch_message)) {
-			ssize_t nr;
+		err = bats_pitch112_read(&stream, &msg);
+		if (err)
+			error("%s: %s: %s\n", program, filename, strerror(err));
 
-			buffer_compact(uncomp_buf);
-
-			nr = buffer_inflate(comp_buf, uncomp_buf, stream);
-			if (nr < 0)
-				error("%s: zlib error\n", program);
-
-			if (!nr)
-				break;
-
-			print_progress(comp_buf);
-
-			goto retry_size;
-		}
-
-		ch = buffer_peek_8(uncomp_buf);
-		if (ch != 0x53)
-			error("%s: %s: expected sequence message marker 0x53, got 0x%x ('%c')",
-					program, filename, ch, ch);
-
-		buffer_advance(uncomp_buf, sizeof(u8));
-
-retry_message:
-		msg = pitch_message_decode(uncomp_buf);
-		if (!msg) {
-			ssize_t nr;
-
-			buffer_compact(uncomp_buf);
-
-			nr = buffer_inflate(comp_buf, uncomp_buf, stream);
-			if (nr < 0)
-				error("%s: zlib error\n", program);
-
-			if (!nr)
-				break;
-
-			print_progress(comp_buf);
-
-			goto retry_message;
-		}
-
-retry_LF:
-		if (buffer_size(uncomp_buf) < sizeof(u8)) {
-			ssize_t nr;
-
-			buffer_compact(uncomp_buf);
-
-			nr = buffer_inflate(comp_buf, uncomp_buf, stream);
-			if (nr < 0)
-				error("%s: zlib error\n", program);
-
-			if (!nr)
-				break;
-
-			print_progress(comp_buf);
-
-			goto retry_LF;
-		}
-
-		ch = buffer_peek_8(uncomp_buf);
-		if (ch != 0x0A)
-			error("%s: %s: expected LF marker 0x0A, got 0x%x ('%c')",
-					program, filename, ch, ch);
-
-		buffer_advance(uncomp_buf, sizeof(u8));
+		if (!msg)
+			break;
 
 		stats[msg->MessageType]++;
 	}
@@ -280,9 +229,10 @@ static void nasdaq_itch41_print_stats(void)
 	printf("\n");
 }
 
-static void nasdaq_itch41_process(int fd, z_stream *stream)
+static void nasdaq_itch41_process(int fd, z_stream *zstream)
 {
 	struct buffer *comp_buf, *uncomp_buf;
+	struct stream stream;
 	struct stat st;
 
 	if (fstat(fd, &st) < 0)
@@ -292,53 +242,30 @@ static void nasdaq_itch41_process(int fd, z_stream *stream)
 	if (!comp_buf)
 		error("%s: %s: %s\n", program, filename, strerror(errno));
 
-	stream->next_in = (void *) buffer_start(comp_buf);
+	zstream->next_in = (void *) buffer_start(comp_buf);
 
 	uncomp_buf = buffer_new(BUFFER_SIZE);
 	if (!uncomp_buf)
 		error("%s: %s\n", program, strerror(errno));
 
+	stream = (struct stream) {
+		.zstream	= zstream,
+		.uncomp_buf	= uncomp_buf,
+		.comp_buf	= comp_buf,
+		.progress	= print_progress,
+	};
+
+
 	for (;;) {
 		struct itch41_message *msg;
+		int err;
 
-retry_size:
-		if (buffer_size(uncomp_buf) < sizeof(u16)) {
-			ssize_t nr;
+		err = nasdaq_itch41_read(&stream, &msg);
+		if (err)
+			error("%s: %s: %s\n", program, filename, strerror(err));
 
-			buffer_compact(uncomp_buf);
-
-			nr = buffer_inflate(comp_buf, uncomp_buf, stream);
-			if (nr < 0)
-				error("%s: zlib error\n", program);
-
-			if (!nr)
-				break;
-
-			print_progress(comp_buf);
-
-			goto retry_size;
-		}
-
-		buffer_advance(uncomp_buf, sizeof(u16));
-
-retry_message:
-		msg = itch41_message_decode(uncomp_buf);
-		if (!msg) {
-			ssize_t nr;
-
-			buffer_compact(uncomp_buf);
-
-			nr = buffer_inflate(comp_buf, uncomp_buf, stream);
-			if (nr < 0)
-				error("%s: zlib error\n", program);
-
-			if (!nr)
-				break;
-
-			print_progress(comp_buf);
-
-			goto retry_message;
-		}
+		if (!msg)
+			break;
 
 		stats[msg->MessageType]++;
 	}
