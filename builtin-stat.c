@@ -139,6 +139,7 @@ static void bats_pitch112_print_stats(void)
 {
 	printf(" Message type stats for '%s':\n\n", filename);
 
+	print_stat(PITCH_MSG_SYMBOL_CLEAR,	"Symbol Clear");
 	print_stat(PITCH_MSG_ADD_ORDER_SHORT,	"Add Order (short)");
 	print_stat(PITCH_MSG_ADD_ORDER_LONG,	"Add Order (long)");
 	print_stat(PITCH_MSG_ORDER_EXECUTED,	"Order Executed");
