@@ -12,6 +12,8 @@ def from_ob(ob):
     def to_taq(ob_event):
         if ob_event['Event'] == 'D':
             outer.taq = append(outer.taq, taq_date(ob_event))
+        elif ob_event['Event'] == 'T':
+            outer.taq = append(outer.taq, taq_trade(ob_event))
 
     ob.apply(to_taq, axis=1)
 
@@ -24,6 +26,19 @@ def taq_date(ob_event):
         # Date
         'TimeZone': ob_event['TimeZone'],
         'Exchange': ob_event['Exchange'],
+    }
+
+
+def taq_trade(ob_event):
+    return {
+        'Event':         'T',
+        'Time':          ob_event['Time'],
+        'Exchange':      ob_event['Exchange'],
+        'Symbol':        ob_event['Symbol'],
+        'ExecID':        ob_event['ExecID'],
+        'TradeQuantity': ob_event['Quantity'],
+        'TradePrice':    ob_event['Price'],
+        'TradeSide':     ob_event['Side'],
     }
 
 
