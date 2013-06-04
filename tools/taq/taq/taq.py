@@ -11,23 +11,24 @@ def from_ob(ob):
 
     def to_taq(ob_event):
         if ob_event['Event'] == 'D':
-            outer.taq = append_date(outer.taq, ob_event)
+            outer.taq = append(outer.taq, taq_date(ob_event))
 
     ob.apply(to_taq, axis=1)
 
     return outer.taq
 
 
-def append_date(taq, ob_event):
-    return taq.append(
-        {
-            'Event':    'D',
-            # Date
-            'TimeZone': ob_event['TimeZone'],
-            'Exchange': ob_event['Exchange'],
-        },
-        ignore_index=True,
-    )
+def taq_date(ob_event):
+    return {
+        'Event':    'D',
+        # Date
+        'TimeZone': ob_event['TimeZone'],
+        'Exchange': ob_event['Exchange'],
+    }
+
+
+def append(taq, taq_event):
+    return taq.append(taq_event, ignore_index=True)
 
 
 def empty():
