@@ -14,6 +14,8 @@ def from_ob(ob):
             outer.taq = append(outer.taq, taq_date(ob_event))
         elif ob_event['Event'] == 'T':
             outer.taq = append(outer.taq, taq_trade(ob_event))
+        elif ob_event['Event'] == 'B':
+            outer.taq = append(outer.taq, taq_trade_break(ob_event))
 
     ob.apply(to_taq, axis=1)
 
@@ -39,6 +41,16 @@ def taq_trade(ob_event):
         'TradeQuantity': ob_event['Quantity'],
         'TradePrice':    ob_event['Price'],
         'TradeSide':     ob_event['Side'],
+    }
+
+
+def taq_trade_break(ob_event):
+    return {
+        'Event':    'B',
+        'Time':     ob_event['Time'    ],
+        'Exchange': ob_event['Exchange'],
+        'Symbol':   ob_event['Symbol'  ],
+        'ExecID':   ob_event['ExecID'  ],
     }
 
 
