@@ -20,6 +20,7 @@ const char *program;
 static struct builtin_cmd builtins[] = {
 	DEFINE_BUILTIN("convert",	cmd_convert),
 	DEFINE_BUILTIN("stat",		cmd_stat),
+	DEFINE_BUILTIN("nyse-taq",	cmd_nyse_taq),
 };
 
 static struct builtin_cmd *parse_builtin_cmd(const char *name)
@@ -43,6 +44,7 @@ static void usage(void)
 "\n The commands are:\n"						\
 "   convert   Convert file\n"						\
 "   stat      Print stats\n"						\
+"   nyse-taq  Convert NYSE Daily TAQ\n"					\
 "\n"
 	fprintf(stderr, FMT, program);
 
