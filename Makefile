@@ -82,6 +82,7 @@ BUILTIN_OBJS += base36.o
 BUILTIN_OBJS += bats-pitch112.o
 BUILTIN_OBJS += builtin-ob.o
 BUILTIN_OBJS += builtin-stat.o
+BUILTIN_OBJS += builtin-taq.o
 BUILTIN_OBJS += dsv.o
 BUILTIN_OBJS += nasdaq-itch41.o
 BUILTIN_OBJS += ob.o
