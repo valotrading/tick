@@ -92,6 +92,7 @@ BUILTIN_OBJS += nasdaq/stat.o
 BUILTIN_OBJS += ob.o
 BUILTIN_OBJS += progress.o
 BUILTIN_OBJS += stats.o
+BUILTIN_OBJS += taq.o
 
 #
 # Build rules
