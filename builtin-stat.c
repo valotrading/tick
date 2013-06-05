@@ -131,6 +131,7 @@ int cmd_stat(int argc, char *argv[])
 
 		break;
 	}
+	case FORMAT_NYSE_TAQ_17:
 	default:
 		error("%s is not a supported file format", format);
 
