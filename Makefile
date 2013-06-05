@@ -16,6 +16,12 @@ ifneq ($(HAVE_LIBTRADING),yes)
 $(error Your system does not have libtrading.)
 endif
 
+HAVE_GLIB2 := $(shell pkg-config --exists glib-2.0 >/dev/null 2>&1 && echo 'yes')
+
+ifneq ($(HAVE_GLIB2),yes)
+$(error Your system does not have GLib. Please install glib2-devel or libglib2.0-dev)
+endif
+
 PREFIX ?= $(HOME)
 DESTDIR=
 BINDIR=$(PREFIX)/bin
@@ -50,9 +56,12 @@ CFLAGS = -g -std=gnu99 -Wall -Wextra $(CFLAGS_WERROR) $(CFLAGS_OPTIMIZE) $(EXTRA
 ALL_CFLAGS = $(CFLAGS) -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 ALL_LDFLAGS = $(LDFLAGS)
 
-ALL_CFLAGS += $(shell libtrading-config --cflags)
-ALL_LDFLAGS += $(shell libtrading-config --ldflags) 
-LIBS += $(shell libtrading-config --libs) 
+ALL_CFLAGS	+= $(shell libtrading-config --cflags)
+ALL_LDFLAGS	+= $(shell libtrading-config --ldflags)
+LIBS		+= $(shell libtrading-config --libs)
+
+ALL_CFLAGS	+= $(shell pkg-config --cflags glib-2.0)
+LIBS		+= $(shell pkg-config --libs glib-2.0)
 
 # Make the build silent by default
 V =
@@ -70,8 +79,11 @@ INST_PROGRAMS = tick
 PROGRAMS = tick
 
 BUILTIN_OBJS += bats-pitch112.o
+BUILTIN_OBJS += builtin-convert.o
 BUILTIN_OBJS += builtin-stat.o
 BUILTIN_OBJS += nasdaq-itch41.o
+BUILTIN_OBJS += ob.o
+BUILTIN_OBJS += taq.o
 
 #
 # Build rules
