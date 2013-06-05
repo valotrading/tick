@@ -47,7 +47,7 @@ static void error(const char *fmt, ...)
 static void usage(void)
 {
 #define FMT								\
-"\n usage: %s stat [<options>] <input> <output>\n"			\
+"\n usage: %s convert [<options>] <input> <output>\n"			\
 "\n"									\
 "    -s, --symbol <symbol> symbol\n"					\
 "    -f, --format <format> input file format\n"				\
@@ -94,6 +94,9 @@ static void parse_args(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
+
+	if (argc < 2)
+		usage();
 
 	input_filename	= argv[0];
 	output_filename = argv[1];
@@ -612,9 +615,6 @@ int cmd_convert(int argc, char *argv[])
 	z_stream stream;
 
 	setlocale(LC_ALL, "");
-
-	if (argc < 4)
-		usage();
 
 	memset(symbol, ' ', sizeof(symbol));
 
