@@ -48,38 +48,23 @@ static size_t fmt_price(char *buf, struct ob_price *price, char sep)
 	return ret;
 }
 
-static size_t fmt_value(char *buf, const char *value, size_t len, char sep)
-{
-	size_t ret = 0;
-
-	if (value) {
-		memcpy(buf, value, len);
-
-		ret += len;
-	}
-
-	buf[ret++] = sep;
-
-	return ret;
-}
-
 void ob_write_event(int fd, struct ob_event *event)
 {
 	size_t idx = 0;
 	char buf[1024];
 
-	idx += dsv_fmt_char(buf + idx, event->type, '\t');
-	idx += fmt_value(buf + idx, event->date, event->date_len, '\t');
-	idx += fmt_value(buf + idx, event->time, event->time_len, '\t');
-	idx += fmt_value(buf + idx, event->time_zone, event->time_zone_len, '\t');
-	idx += fmt_value(buf + idx, event->exchange, event->exchange_len, '\t');
-	idx += fmt_value(buf + idx, event->symbol, event->symbol_len, '\t');
-	idx += fmt_value(buf + idx, event->order_id, event->order_id_len, '\t');
-	idx += fmt_value(buf + idx, event->exec_id, event->exec_id_len, '\t');
-	idx += fmt_value(buf + idx, event->side, event->side_len, '\t');
-	idx += fmt_value(buf + idx, event->quantity, event->quantity_len, '\t');
+	idx += dsv_fmt_char (buf + idx, event->type, '\t');
+	idx += dsv_fmt_value(buf + idx, event->date, event->date_len, '\t');
+	idx += dsv_fmt_value(buf + idx, event->time, event->time_len, '\t');
+	idx += dsv_fmt_value(buf + idx, event->time_zone, event->time_zone_len, '\t');
+	idx += dsv_fmt_value(buf + idx, event->exchange, event->exchange_len, '\t');
+	idx += dsv_fmt_value(buf + idx, event->symbol, event->symbol_len, '\t');
+	idx += dsv_fmt_value(buf + idx, event->order_id, event->order_id_len, '\t');
+	idx += dsv_fmt_value(buf + idx, event->exec_id, event->exec_id_len, '\t');
+	idx += dsv_fmt_value(buf + idx, event->side, event->side_len, '\t');
+	idx += dsv_fmt_value(buf + idx, event->quantity, event->quantity_len, '\t');
 	idx += fmt_price(buf + idx, &event->price, '\t');
-	idx += fmt_value(buf + idx, event->status, event->status_len, '\n');
+	idx += dsv_fmt_value(buf + idx, event->status, event->status_len, '\n');
 
 	write(fd, buf, idx);
 }

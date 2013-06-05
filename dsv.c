@@ -1,7 +1,6 @@
 #include "dsv.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 
 void dsv_write_header(int fd, const char *columns[], size_t nr_columns, char delim)
