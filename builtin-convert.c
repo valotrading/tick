@@ -1,6 +1,7 @@
 #include "builtins.h"
 
 #include "bats-pitch112.h"
+#include "decimal.h"
 #include "base10.h"
 #include "base36.h"
 #include "stream.h"
@@ -272,7 +273,7 @@ found:
 			.side_len	= sizeof(m->SideIndicator),
 			.quantity	= m->Shares,
 			.quantity_len	= sizeof(m->Shares),
-			.price		= (struct ob_price) {
+			.price		= (struct decimal) {
 				.integer	= m->Price,
 				.integer_len	= PITCH_PRICE_INT_LEN,
 				.fraction	= m->Price + PITCH_PRICE_INT_LEN,
@@ -312,7 +313,7 @@ found:
 			.side_len	= sizeof(m->SideIndicator),
 			.quantity	= m->Shares,
 			.quantity_len	= sizeof(m->Shares),
-			.price		= (struct ob_price) {
+			.price		= (struct decimal) {
 				.integer	= m->Price,
 				.integer_len	= PITCH_PRICE_INT_LEN,
 				.fraction	= m->Price + PITCH_PRICE_INT_LEN,
@@ -415,7 +416,7 @@ found:
 			.exec_id_len	= sizeof(m->ExecutionID),
 			.quantity	= m->Shares,
 			.quantity_len	= sizeof(m->Shares),
-			.price		= (struct ob_price) {
+			.price		= (struct decimal) {
 				.integer	= m->Price,
 				.integer_len	= PITCH_PRICE_INT_LEN,
 				.fraction	= m->Price + PITCH_PRICE_INT_LEN,
@@ -442,7 +443,7 @@ found:
 			.exec_id_len	= sizeof(m->ExecutionID),
 			.quantity	= m->Shares,
 			.quantity_len	= sizeof(m->Shares),
-			.price		= (struct ob_price) {
+			.price		= (struct decimal) {
 				.integer	= m->Price,
 				.integer_len	= PITCH_PRICE_INT_LEN,
 				.fraction	= m->Price + PITCH_PRICE_INT_LEN,
