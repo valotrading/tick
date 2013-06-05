@@ -47,7 +47,7 @@ static void error(const char *fmt, ...)
 static void usage(void)
 {
 #define FMT								\
-"\n usage: %s stat [<options>] <input> <output>\n"			\
+"\n usage: %s convert [<options>] <input> <output>\n"			\
 "\n"									\
 "    -s, --symbol <symbol> symbol\n"					\
 "    -f, --format <format> input file format\n"				\
