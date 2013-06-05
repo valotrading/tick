@@ -283,9 +283,6 @@ int cmd_stat(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (argc < 3)
-		usage();
-
 	parse_args(argc - 1, argv + 1);
 
 	if (!format)
