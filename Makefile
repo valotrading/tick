@@ -83,6 +83,7 @@ BUILTIN_OBJS += builtin-convert.o
 BUILTIN_OBJS += builtin-stat.o
 BUILTIN_OBJS += nasdaq-itch41.o
 BUILTIN_OBJS += ob.o
+BUILTIN_OBJS += taq.o
 
 #
 # Build rules
