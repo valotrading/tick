@@ -18,7 +18,7 @@ const char *program;
 #define DEFINE_BUILTIN(n, c) { .name = n, .cmd_fn = c }
 
 static struct builtin_cmd builtins[] = {
-	DEFINE_BUILTIN("convert",	cmd_convert),
+	DEFINE_BUILTIN("ob",		cmd_ob),
 	DEFINE_BUILTIN("stat",		cmd_stat),
 };
 
@@ -41,7 +41,7 @@ static void usage(void)
 #define FMT								\
 "\n usage: %s COMMAND [ARGS]\n"						\
 "\n The commands are:\n"						\
-"   convert   Convert file\n"						\
+"   ob        Convert file to OB format\n"				\
 "   stat      Print stats\n"						\
 "\n"
 	fprintf(stderr, FMT, program);
