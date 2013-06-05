@@ -616,9 +616,6 @@ int cmd_convert(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (argc < 4)
-		usage();
-
 	memset(symbol, ' ', sizeof(symbol));
 
 	parse_args(argc - 1, argv + 1);
