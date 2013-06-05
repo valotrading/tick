@@ -78,6 +78,7 @@ INST_PROGRAMS = tick
 
 PROGRAMS = tick
 
+BUILTIN_OBJS += base36.o
 BUILTIN_OBJS += bats-pitch112.o
 BUILTIN_OBJS += builtin-convert.o
 BUILTIN_OBJS += builtin-stat.o
