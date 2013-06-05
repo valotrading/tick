@@ -1,6 +1,7 @@
 #include "builtins.h"
 
 #include "bats-pitch112.h"
+#include "base10.h"
 #include "stream.h"
 #include "types.h"
 #include "ob.h"
@@ -190,22 +191,6 @@ static uint64_t base36_decode(const char *s, size_t len)
 		ret *= 36;
 
 		ret += base36_pos(ch);
-	}
-
-	return ret;
-}
-
-static uint64_t base10_decode(const char *s, size_t len)
-{
-	uint64_t ret = 0;
-	unsigned int i;
-
-	for (i = 0; i < len; i++) {
-		char ch = s[i];
-
-		ret *= 10;
-
-		ret += (ch - '0');
 	}
 
 	return ret;
