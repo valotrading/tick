@@ -13,7 +13,6 @@
 #include <inttypes.h>
 #include <assert.h>
 #include <getopt.h>
-#include <libgen.h>
 #include <locale.h>
 #include <stdarg.h>
 #include <stdlib.h>
