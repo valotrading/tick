@@ -1,11 +1,11 @@
 #include "ob.h"
 
 #include "types.h"
+#include "dsv.h"
 
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
 
 static const char *column_names[] = {
 	"Event",
@@ -24,20 +24,7 @@ static const char *column_names[] = {
 
 void ob_write_header(int fd)
 {
-	unsigned long idx = 0;
-	unsigned int i;
-	char buf[1024];
-
-	for (i = 0; i < ARRAY_SIZE(column_names); i++) {
-		idx += snprintf(buf + idx, sizeof(buf) - idx, "%s", column_names[i]);
-
-		if (i < ARRAY_SIZE(column_names)-1)
-			idx += snprintf(buf + idx, sizeof(buf) - idx, "\t");
-	}
-
-	idx += snprintf(buf + idx, sizeof(buf) - idx, "\n");
-
-	write(fd, buf, strlen(buf));
+	dsv_write_header(fd, column_names, ARRAY_SIZE(column_names), '\t');
 }
 
 static size_t fmt_char(char *buf, unsigned char c, char sep)
