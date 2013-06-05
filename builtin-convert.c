@@ -95,6 +95,9 @@ static void parse_args(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (argc < 2)
+		usage();
+
 	input_filename	= argv[0];
 	output_filename = argv[1];
 }
