@@ -4,6 +4,7 @@
 #include "decimal.h"
 #include "base10.h"
 #include "base36.h"
+#include "format.h"
 #include "stream.h"
 #include "types.h"
 #include "ob.h"
@@ -24,8 +25,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <glib.h>
-
-#define FORMAT_BATS_PITCH_112	"bats-pitch-1.12"
 
 struct pitch_filter {
 	char			symbol[6];
