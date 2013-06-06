@@ -49,7 +49,7 @@ static void error(const char *fmt, ...)
 static void usage(void)
 {
 #define FMT								\
-"\n usage: %s convert [<options>] <input> <output>\n"			\
+"\n usage: %s ob [<options>] <input> <output>\n"			\
 "\n"									\
 "    -s, --symbol <symbol> symbol\n"					\
 "    -f, --format <format> input file format\n"				\
@@ -533,7 +533,7 @@ static void bats_pitch112_process(int fd, z_stream *zstream, int out_fd)
 	buffer_delete(uncomp_buf);
 }
 
-int cmd_convert(int argc, char *argv[])
+int cmd_ob(int argc, char *argv[])
 {
 	int in_fd, out_fd;
 	z_stream stream;
