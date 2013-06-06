@@ -68,6 +68,7 @@ static void usage(void)
 "\n"									\
 "    -s, --symbol <symbol> symbol\n"					\
 "    -f, --format <format> input file format\n"				\
+"    -d, --date <date>     date\n"					\
 "\n Supported file formats are:\n"					\
 "\n"									\
 "   %s\n"								\
@@ -82,12 +83,14 @@ static void usage(void)
 }
 
 static const struct option options[] = {
+	{ "date",	required_argument,	NULL, 'd' },
 	{ "format",	required_argument, 	NULL, 'f' },
 	{ "symbol",	required_argument, 	NULL, 's' },
 };
 
 static const char	*output_filename;
 static const char	*input_filename;
+static const char	*date;
 static const char	*format;
 static const char	*symbol;
 
@@ -95,13 +98,16 @@ static void parse_args(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt_long(argc, argv, "s:f:", options, NULL)) != -1) {
+	while ((opt = getopt_long(argc, argv, "s:f:d:", options, NULL)) != -1) {
 		switch (opt) {
 		case 's':
 			symbol		= optarg;
 			break;
 		case 'f':
 			format		= optarg;
+			break;
+		case 'd':
+			date		= optarg;
 			break;
 		default:
 			usage();
@@ -181,7 +187,7 @@ static struct order_info *lookup_order(struct pitch_message *msg)
 #define PITCH_FILENAME_EXT		".dat.gz"
 #define PITCH_FILENAME_SUFFIX_LEN	(PITCH_FILENAME_DATE_LEN + strlen(PITCH_FILENAME_EXT))
 
-static int pitch_file_parse_date(const char *filename, char *date, size_t date_len)
+static int pitch_file_parse_date(const char *filename, char *buf, size_t buf_len)
 {
 	const char *suffix;
 	size_t len;
@@ -195,7 +201,7 @@ static int pitch_file_parse_date(const char *filename, char *date, size_t date_l
 	if (memcmp(suffix + PITCH_FILENAME_DATE_LEN, PITCH_FILENAME_EXT, strlen(PITCH_FILENAME_EXT)))
 		return -EINVAL;
 
-	snprintf(date, date_len, "%c%c%c%c-%c%c-%c%c",
+	snprintf(buf, buf_len, "%c%c%c%c-%c%c-%c%c",
 		suffix[0], suffix[1], suffix[2], suffix[3],
 		suffix[4], suffix[5], suffix[6], suffix[7]);
 
@@ -618,10 +624,14 @@ int cmd_ob(int argc, char *argv[])
 	if (!strcmp(format, FORMAT_BATS_PITCH_112)) {
 		struct pitch_session session;
 		struct ob_event event;
-		char date[11];
+		char date_buf[11];
 
-		if (pitch_file_parse_date(input_filename, date, sizeof(date)) < 0)
-			error("%s: unable to parse date from filename", input_filename);
+		if (!date) {
+			if (pitch_file_parse_date(input_filename, date_buf, sizeof(date_buf)) < 0)
+				error("%s: unable to parse date from filename", input_filename);
+
+			date = date_buf;
+		}
 
 		session = (struct pitch_session) {
 			.zstream	= &stream,
