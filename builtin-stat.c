@@ -7,13 +7,13 @@
 #include "nasdaq-itch41.h"
 #include "builtins.h"
 #include "stream.h"
+#include "error.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <inttypes.h>
 #include <libgen.h>
 #include <locale.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -32,23 +32,6 @@
 #define FORMAT_NASDAQ_ITCH_41	"nasdaq-itch-4.1"
 
 extern const char *program;
-
-static void error(const char *fmt, ...)
-{
-	va_list ap;
-
-	fprintf(stderr, "%s: error: ", program);
-
-	va_start(ap, fmt);
-
-	vfprintf(stderr, fmt, ap);
-
-	va_end(ap);
-
-	fprintf(stderr, "\n");
-
-	exit(EXIT_FAILURE);
-}
 
 static void usage(void)
 {

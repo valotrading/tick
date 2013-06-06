@@ -5,6 +5,7 @@
 #include "base10.h"
 #include "base36.h"
 #include "stream.h"
+#include "error.h"
 #include "types.h"
 #include "ob.h"
 
@@ -17,7 +18,6 @@
 #include <assert.h>
 #include <getopt.h>
 #include <locale.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -43,23 +43,6 @@ struct pitch_session {
 };
 
 extern const char *program;
-
-static void error(const char *fmt, ...)
-{
-	va_list ap;
-
-	fprintf(stderr, "%s: error: ", program);
-
-	va_start(ap, fmt);
-
-	vfprintf(stderr, fmt, ap);
-
-	va_end(ap);
-
-	fprintf(stderr, "\n");
-
-	exit(EXIT_FAILURE);
-}
 
 static void usage(void)
 {
