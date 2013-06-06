@@ -114,7 +114,7 @@ static void init_stream(z_stream *stream)
 	memset(stream, 0, sizeof(*stream));
 
 	if (inflateInit2(stream, 15 + 32) != Z_OK)
-		error("%s: unable to initialize zlib\n", program);
+		error("unable to initialize zlib");
 }
 
 static void release_stream(z_stream *stream)
@@ -637,10 +637,10 @@ int cmd_ob(int argc, char *argv[])
 	printf("\n");
 
 	if (close(in_fd) < 0)
-		error("%s\n", input_filename, strerror(errno));
+		error("%s: %s", input_filename, strerror(errno));
 
 	if (close(out_fd) < 0)
-		error("%s\n", output_filename, strerror(errno));
+		error("%s: %s", output_filename, strerror(errno));
 
 	release_stream(&stream);
 
