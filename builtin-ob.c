@@ -86,6 +86,7 @@ static const struct option options[] = {
 	{ "date",	required_argument,	NULL, 'd' },
 	{ "format",	required_argument, 	NULL, 'f' },
 	{ "symbol",	required_argument, 	NULL, 's' },
+	{ NULL,		0,			NULL,  0  },
 };
 
 static const char	*output_filename;

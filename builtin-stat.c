@@ -73,6 +73,7 @@ static void usage(void)
 
 static const struct option options[] = {
 	{ "format",	required_argument, 	NULL, 'f' },
+	{ NULL,		0,			NULL,  0  },
 };
 
 static const char	*filename;
