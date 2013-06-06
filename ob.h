@@ -1,6 +1,8 @@
 #ifndef TICK_OB_H
 #define TICK_OB_H
 
+#include "decimal.h"
+
 /*
  * OB format
  */
@@ -13,13 +15,6 @@ enum ob_event_type {
 	OB_EVENT_CLEAR		= 'C',
 	OB_EVENT_TRADE		= 'T',
 	OB_EVENT_STATUS		= 'S',
-};
-
-struct ob_price {
-	const char		*integer;
-	unsigned long		integer_len;
-	const char		*fraction;
-	unsigned long		fraction_len;
 };
 
 struct ob_event {
@@ -44,7 +39,7 @@ struct ob_event {
 	unsigned long		quantity_len;
 	const char		*status;
 	unsigned long		status_len;
-	struct ob_price		price;
+	struct decimal		price;
 };
 
 void ob_write_header(int fd);
