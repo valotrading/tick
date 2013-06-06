@@ -14,6 +14,7 @@ enum ob_event_type {
 	OB_EVENT_EXECUTE_ORDER	= 'E',
 	OB_EVENT_CLEAR		= 'C',
 	OB_EVENT_TRADE		= 'T',
+	OB_EVENT_TRADE_BREAK	= 'B',
 	OB_EVENT_STATUS		= 'S',
 };
 

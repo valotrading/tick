@@ -128,6 +128,11 @@ static void release_stream(z_stream *stream)
 	inflateEnd(stream);
 }
 
+struct exec_info {
+	uint64_t		exec_id;
+	const char		*symbol;
+};
+
 struct order_info {
 	uint64_t		order_id;
 	uint32_t		remaining;
@@ -139,6 +144,7 @@ struct order_info {
  */
 
 static GHashTable *order_hash;
+static GHashTable *exec_hash;
 
 static struct order_info *lookup_order(struct pitch_message *msg)
 {
@@ -225,6 +231,19 @@ static bool pitch_filter_msg(struct pitch_filter *filter, struct pitch_message *
 
 		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
 	}
+	case PITCH_MSG_TRADE_BREAK: {
+		struct pitch_msg_trade_break *m = (void *) msg;
+		struct exec_info *e_info;
+		unsigned long exec_id;
+
+		exec_id = base36_decode(m->ExecutionID, sizeof(m->ExecutionID));
+
+		e_info = g_hash_table_lookup(exec_hash, &exec_id);
+		if (!e_info)
+			return false;
+
+		return !memcmp(e_info->symbol, filter->symbol, 6);
+	}
 	case PITCH_MSG_TRADING_STATUS: {
 		struct pitch_msg_trading_status *m = (void *) msg;
 
@@ -237,7 +256,7 @@ static bool pitch_filter_msg(struct pitch_filter *filter, struct pitch_message *
 	return false;
 }
 
-static gboolean remove_entry(gpointer __maybe_unused key, gpointer __maybe_unused  val, gpointer __maybe_unused data)
+static gboolean free_entry(gpointer __maybe_unused key, gpointer __maybe_unused  val, gpointer __maybe_unused data)
 {
 	free(val);
 
@@ -276,7 +295,7 @@ found:
 
 		ob_write_event(session->out_fd, &event);
 
-		g_hash_table_foreach_remove(order_hash, remove_entry, NULL);
+		g_hash_table_foreach_remove(order_hash, free_entry, NULL);
 
 		break;
 	}
@@ -366,6 +385,8 @@ found:
 	case PITCH_MSG_ORDER_EXECUTED: {
 		struct pitch_msg_order_executed *m = (void *) msg;
 		unsigned int nr_executed;
+		struct exec_info *e_info;
+		unsigned long exec_id;
 
 		assert(info != NULL);
 
@@ -374,6 +395,14 @@ found:
 		assert(info->remaining >= nr_executed);
 
 		info->remaining	-= nr_executed;
+
+		exec_id = base36_decode(m->ExecutionID, sizeof(m->ExecutionID));
+
+		e_info = malloc(sizeof(*e_info));
+		e_info->exec_id	= exec_id;
+		e_info->symbol	= session->filter.symbol;
+
+		g_hash_table_insert(exec_hash, &e_info->exec_id, e_info);
 
 		event = (struct ob_event) {
 			.type		= OB_EVENT_EXECUTE_ORDER,
@@ -447,6 +476,16 @@ found:
 	}
 	case PITCH_MSG_TRADE_SHORT: {
 		struct pitch_msg_trade_short *m = (void *) msg;
+		struct exec_info *e_info;
+		unsigned long exec_id;
+
+		exec_id = base36_decode(m->ExecutionID, sizeof(m->ExecutionID));
+
+		e_info = malloc(sizeof(*e_info));
+		e_info->exec_id	= exec_id;
+		e_info->symbol	= session->filter.symbol;
+
+		g_hash_table_insert(exec_hash, &e_info->exec_id, e_info);
 
 		event = (struct ob_event) {
 			.type		= OB_EVENT_TRADE,
@@ -474,6 +513,16 @@ found:
 	}
 	case PITCH_MSG_TRADE_LONG: {
 		struct pitch_msg_trade_long *m = (void *) msg;
+		struct exec_info *e_info;
+		unsigned long exec_id;
+
+		exec_id = base36_decode(m->ExecutionID, sizeof(m->ExecutionID));
+
+		e_info = malloc(sizeof(*e_info));
+		e_info->exec_id	= exec_id;
+		e_info->symbol	= session->filter.symbol;
+
+		g_hash_table_insert(exec_hash, &e_info->exec_id, e_info);
 
 		event = (struct ob_event) {
 			.type		= OB_EVENT_TRADE,
@@ -493,6 +542,25 @@ found:
 				.fraction	= m->Price + PITCH_PRICE_INT_LEN,
 				.fraction_len	= PITCH_PRICE_FRACTION_LEN,
 			},
+		};
+
+		ob_write_event(session->out_fd, &event);
+
+		break;
+	}
+	case PITCH_MSG_TRADE_BREAK: {
+		struct pitch_msg_trade_break *m = (void *) msg;
+
+		event = (struct ob_event) {
+			.type		= OB_EVENT_TRADE_BREAK,
+			.time		= m->Timestamp,
+			.time_len	= sizeof(m->Timestamp),
+			.exchange	= session->exchange,
+			.exchange_len	= session->exchange_len,
+			.symbol		= symbol,
+			.symbol_len	= strlen(symbol),
+			.exec_id	= m->ExecutionID,
+			.exec_id_len	= sizeof(m->ExecutionID),
 		};
 
 		ob_write_event(session->out_fd, &event);
@@ -552,6 +620,10 @@ static void bats_pitch112_process(struct pitch_session *session)
 		.progress	= print_progress,
 	};
 
+	exec_hash = g_hash_table_new(g_int_hash, g_int_equal);
+	if (!exec_hash)
+		error("out of memory");
+
 	order_hash = g_hash_table_new(g_int_hash, g_int_equal);
 	if (!order_hash)
 		error("out of memory");
@@ -571,6 +643,10 @@ static void bats_pitch112_process(struct pitch_session *session)
 	}
 
 	g_hash_table_destroy(order_hash);
+
+	g_hash_table_foreach_remove(exec_hash, free_entry, NULL);
+
+	g_hash_table_destroy(exec_hash);
 
 	buffer_munmap(comp_buf);
 
