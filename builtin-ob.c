@@ -127,6 +127,7 @@ static void release_stream(z_stream *stream)
 struct order_info {
 	uint64_t		order_id;
 	uint32_t		remaining;
+	char			price[10];
 };
 
 /*
@@ -256,6 +257,7 @@ found:
 
 		info->order_id	= order_id;
 		info->remaining	= base10_decode(m->Shares, sizeof(m->Shares));
+		memcpy(info->price, m->Price, sizeof(m->Price));
 
 		g_hash_table_insert(order_hash, &info->order_id, info);
 
@@ -296,6 +298,7 @@ found:
 		info = malloc(sizeof(*info));
 		info->order_id	= order_id;
 		info->remaining	= base10_decode(m->Shares, sizeof(m->Shares));
+		memcpy(info->price, m->Price, sizeof(m->Price));
 
 		g_hash_table_insert(order_hash, &info->order_id, info);
 
@@ -351,6 +354,12 @@ found:
 			.exec_id_len	= sizeof(m->ExecutionID),
 			.quantity	= m->ExecutedShares,
 			.quantity_len	= sizeof(m->ExecutedShares),
+			.price          = (struct decimal) {
+				.integer        = info->price,
+				.integer_len    = PITCH_PRICE_INT_LEN,
+				.fraction       = info->price + PITCH_PRICE_INT_LEN,
+				.fraction_len   = PITCH_PRICE_FRACTION_LEN,
+			},
 		};
 
 		ob_write_event(out_fd, &event);
