@@ -27,6 +27,10 @@
 
 #define FORMAT_BATS_PITCH_112	"bats-pitch-1.12"
 
+struct pitch_filter {
+	char		symbol[6];
+};
+
 extern const char *program;
 
 static void error(const char *fmt, ...)
@@ -162,38 +166,44 @@ static struct order_info *lookup_order(struct pitch_message *msg)
 	return NULL;
 }
 
-static bool pitch_symbol_filter(struct pitch_message *msg, const char *s)
+static void pitch_filter_init(struct pitch_filter *filter)
+{
+	memset(filter->symbol, ' ', sizeof(filter->symbol));
+	memcpy(filter->symbol, symbol, strlen(symbol));
+}
+
+static bool pitch_filter_msg(struct pitch_filter *filter, struct pitch_message *msg)
 {
 	switch (msg->MessageType) {
 	case PITCH_MSG_SYMBOL_CLEAR: {
 		struct pitch_msg_symbol_clear *m = (void *) msg;
 
-		return !memcmp(m->StockSymbol, s, sizeof(m->StockSymbol));
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
 	}
 	case PITCH_MSG_ADD_ORDER_SHORT: {
 		struct pitch_msg_add_order_short *m = (void *) msg;
 
-		return !memcmp(m->StockSymbol, s, sizeof(m->StockSymbol));
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
 	}
 	case PITCH_MSG_ADD_ORDER_LONG: {
 		struct pitch_msg_add_order_long *m = (void *) msg;
 
-		return !memcmp(m->StockSymbol, s, sizeof(m->StockSymbol));
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
 	}
 	case PITCH_MSG_TRADE_SHORT: {
 		struct pitch_msg_trade_short *m = (void *) msg;
 
-		return !memcmp(m->StockSymbol, s, sizeof(m->StockSymbol));
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
 	}
 	case PITCH_MSG_TRADE_LONG: {
 		struct pitch_msg_trade_long *m = (void *) msg;
 
-		return !memcmp(m->StockSymbol, s, sizeof(m->StockSymbol));
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
 	}
 	case PITCH_MSG_TRADING_STATUS: {
 		struct pitch_msg_trading_status *m = (void *) msg;
 
-		return !memcmp(m->StockSymbol, s, sizeof(m->StockSymbol));
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
 	}
 	default:
 		break;
@@ -212,7 +222,7 @@ static gboolean remove_entry(gpointer __maybe_unused key, gpointer __maybe_unuse
 #define PITCH_PRICE_INT_LEN		6
 #define PITCH_PRICE_FRACTION_LEN	4
 
-static void bats_pitch112_write(int out_fd, struct pitch_message *msg)
+static void bats_pitch112_write(int out_fd, struct pitch_filter *filter, struct pitch_message *msg)
 {
 	struct order_info *info = NULL;
 	struct ob_event event;
@@ -221,7 +231,7 @@ static void bats_pitch112_write(int out_fd, struct pitch_message *msg)
 	if (info)
 		goto found;
 
-	if (!pitch_symbol_filter(msg, symbol))
+	if (!pitch_filter_msg(filter, msg))
 		return;
 
 found:
@@ -494,8 +504,11 @@ found:
 static void bats_pitch112_process(int fd, z_stream *zstream, int out_fd)
 {
 	struct buffer *comp_buf, *uncomp_buf;
+	struct pitch_filter filter;
 	struct stream stream;
 	struct stat st;
+
+	pitch_filter_init(&filter);
 
 	if (fstat(fd, &st) < 0)
 		error("%s: %s: %s", program, input_filename, strerror(errno));
@@ -532,7 +545,7 @@ static void bats_pitch112_process(int fd, z_stream *zstream, int out_fd)
 		if (!msg)
 			break;
 
-		bats_pitch112_write(out_fd, msg);
+		bats_pitch112_write(out_fd, &filter, msg);
 	}
 
 	g_hash_table_destroy(order_hash);
