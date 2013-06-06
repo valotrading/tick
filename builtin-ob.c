@@ -74,7 +74,7 @@ static const struct option options[] = {
 static const char	*output_filename;
 static const char	*input_filename;
 static const char	*format;
-static char		symbol[6];
+static const char	*symbol;
 
 static void parse_args(int argc, char *argv[])
 {
@@ -83,7 +83,7 @@ static void parse_args(int argc, char *argv[])
 	while ((opt = getopt_long(argc, argv, "s:f:", options, NULL)) != -1) {
 		switch (opt) {
 		case 's':
-			memcpy(symbol, optarg, strlen(optarg));
+			symbol		= optarg;
 			break;
 		case 'f':
 			format		= optarg;
@@ -549,14 +549,12 @@ int cmd_ob(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	memset(symbol, ' ', sizeof(symbol));
-
 	parse_args(argc - 1, argv + 1);
 
 	if (!format)
 		error("%s: unsupported file format", input_filename);
 
-	if (symbol[0] == ' ')
+	if (!symbol)
 		error("symbol not specified");
 
 	init_stream(&stream);
