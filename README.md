@@ -3,6 +3,14 @@
 Tick is a tool for inspecting and converting market data files. It uses
 [Libtrading][Libtrading] for market data file parsing.
 
+## Features
+
+### Exchange Coverage
+
+Exchange | OB
+---------|----------
+BATS     | PITCH
+
 ## Building Tick
 
 ### Requirements
