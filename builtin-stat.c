@@ -8,13 +8,13 @@
 #include "builtins.h"
 #include "format.h"
 #include "stream.h"
+#include "error.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <inttypes.h>
 #include <libgen.h>
 #include <locale.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -30,23 +30,6 @@
 #include <stdio.h>
 
 extern const char *program;
-
-static void error(const char *fmt, ...)
-{
-	va_list ap;
-
-	fprintf(stderr, "%s: error: ", program);
-
-	va_start(ap, fmt);
-
-	vfprintf(stderr, fmt, ap);
-
-	va_end(ap);
-
-	fprintf(stderr, "\n");
-
-	exit(EXIT_FAILURE);
-}
 
 static void usage(void)
 {
@@ -122,7 +105,7 @@ static void init_stream(z_stream *stream)
 	memset(stream, 0, sizeof(*stream));
 
 	if (inflateInit2(stream, 15 + 32) != Z_OK)
-		error("%s: unable to initialize zlib\n", program);
+		error("unable to initialize zlib");
 }
 
 static void release_stream(z_stream *stream)
@@ -160,17 +143,17 @@ static void bats_pitch112_process(int fd, z_stream *zstream)
 	struct stat st;
 
 	if (fstat(fd, &st) < 0)
-		error("%s: %s: %s\n", program, filename, strerror(errno));
+		error("%s: %s", filename, strerror(errno));
 
 	comp_buf = buffer_mmap(fd, st.st_size);
 	if (!comp_buf)
-		error("%s: %s: %s\n", program, filename, strerror(errno));
+		error("%s: %s", filename, strerror(errno));
 
 	zstream->next_in = (void *) buffer_start(comp_buf);
 
 	uncomp_buf = buffer_new(BUFFER_SIZE);
 	if (!uncomp_buf)
-		error("%s: %s\n", program, strerror(errno));
+		error("%s", strerror(errno));
 
 	stream = (struct stream) {
 		.zstream	= zstream,
@@ -185,7 +168,7 @@ static void bats_pitch112_process(int fd, z_stream *zstream)
 
 		err = bats_pitch112_read(&stream, &msg);
 		if (err)
-			error("%s: %s: %s\n", program, filename, strerror(err));
+			error("%s: %s", filename, strerror(err));
 
 		if (!msg)
 			break;
@@ -236,17 +219,17 @@ static void nasdaq_itch41_process(int fd, z_stream *zstream)
 	struct stat st;
 
 	if (fstat(fd, &st) < 0)
-		error("%s: %s: %s\n", program, filename, strerror(errno));
+		error("%s: %s", filename, strerror(errno));
 
 	comp_buf = buffer_mmap(fd, st.st_size);
 	if (!comp_buf)
-		error("%s: %s: %s\n", program, filename, strerror(errno));
+		error("%s: %s", filename, strerror(errno));
 
 	zstream->next_in = (void *) buffer_start(comp_buf);
 
 	uncomp_buf = buffer_new(BUFFER_SIZE);
 	if (!uncomp_buf)
-		error("%s: %s\n", program, strerror(errno));
+		error("%s", strerror(errno));
 
 	stream = (struct stream) {
 		.zstream	= zstream,
@@ -262,7 +245,7 @@ static void nasdaq_itch41_process(int fd, z_stream *zstream)
 
 		err = nasdaq_itch41_read(&stream, &msg);
 		if (err)
-			error("%s: %s: %s\n", program, filename, strerror(err));
+			error("%s: %s", filename, strerror(err));
 
 		if (!msg)
 			break;
@@ -291,7 +274,7 @@ int cmd_stat(int argc, char *argv[])
 
 	fd = open(filename, O_RDONLY);
 	if (fd < 0)
-		error("%s: %s: %s\n", program, filename, strerror(errno));
+		error("%s: %s", filename, strerror(errno));
 
 	if (!strcmp(format, FORMAT_NASDAQ_ITCH_41)) {
 		nasdaq_itch41_process(fd, &stream);
@@ -305,7 +288,7 @@ int cmd_stat(int argc, char *argv[])
 	printf("\n");
 
 	if (close(fd) < 0)
-		error("%s: %s: %s\n", program, filename, strerror(errno));
+		error("%s: %s: %s", filename, strerror(errno));
 
 	release_stream(&stream);
 

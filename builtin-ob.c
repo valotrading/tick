@@ -6,6 +6,7 @@
 #include "base36.h"
 #include "format.h"
 #include "stream.h"
+#include "error.h"
 #include "types.h"
 #include "ob.h"
 
@@ -18,7 +19,6 @@
 #include <assert.h>
 #include <getopt.h>
 #include <locale.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -42,23 +42,6 @@ struct pitch_session {
 };
 
 extern const char *program;
-
-static void error(const char *fmt, ...)
-{
-	va_list ap;
-
-	fprintf(stderr, "%s: error: ", program);
-
-	va_start(ap, fmt);
-
-	vfprintf(stderr, fmt, ap);
-
-	va_end(ap);
-
-	fprintf(stderr, "\n");
-
-	exit(EXIT_FAILURE);
-}
 
 static void usage(void)
 {
@@ -137,7 +120,7 @@ static void init_stream(z_stream *stream)
 	memset(stream, 0, sizeof(*stream));
 
 	if (inflateInit2(stream, 15 + 32) != Z_OK)
-		error("%s: unable to initialize zlib\n", program);
+		error("unable to initialize zlib");
 }
 
 static void release_stream(z_stream *stream)
@@ -664,10 +647,10 @@ int cmd_ob(int argc, char *argv[])
 	printf("\n");
 
 	if (close(in_fd) < 0)
-		error("%s\n", input_filename, strerror(errno));
+		error("%s: %s", input_filename, strerror(errno));
 
 	if (close(out_fd) < 0)
-		error("%s\n", output_filename, strerror(errno));
+		error("%s: %s", output_filename, strerror(errno));
 
 	release_stream(&stream);
 
