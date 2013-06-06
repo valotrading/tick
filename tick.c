@@ -20,6 +20,7 @@ const char *program;
 static struct builtin_cmd builtins[] = {
 	DEFINE_BUILTIN("ob",		cmd_ob),
 	DEFINE_BUILTIN("stat",		cmd_stat),
+	DEFINE_BUILTIN("taq",		cmd_taq),
 };
 
 static struct builtin_cmd *parse_builtin_cmd(const char *name)
@@ -43,6 +44,7 @@ static void usage(void)
 "\n The commands are:\n"						\
 "   ob        Convert file to OB format\n"				\
 "   stat      Print stats\n"						\
+"   taq       Convert file to TAQ format\n"				\
 "\n"
 	fprintf(stderr, FMT, program);
 
