@@ -28,7 +28,18 @@
 #define FORMAT_BATS_PITCH_112	"bats-pitch-1.12"
 
 struct pitch_filter {
-	char		symbol[6];
+	char			symbol[6];
+};
+
+struct pitch_session {
+	struct pitch_filter	filter;
+	z_stream		*zstream;
+	int			in_fd;
+	int			out_fd;
+	const char		*exchange;
+	unsigned long		exchange_len;
+	const char		*time_zone;
+	unsigned long		time_zone_len;
 };
 
 extern const char *program;
@@ -222,7 +233,7 @@ static gboolean remove_entry(gpointer __maybe_unused key, gpointer __maybe_unuse
 #define PITCH_PRICE_INT_LEN		6
 #define PITCH_PRICE_FRACTION_LEN	4
 
-static void bats_pitch112_write(int out_fd, struct pitch_filter *filter, struct pitch_message *msg)
+static void bats_pitch112_write(struct pitch_session *session, struct pitch_message *msg)
 {
 	struct order_info *info = NULL;
 	struct ob_event event;
@@ -231,7 +242,7 @@ static void bats_pitch112_write(int out_fd, struct pitch_filter *filter, struct 
 	if (info)
 		goto found;
 
-	if (!pitch_filter_msg(filter, msg))
+	if (!pitch_filter_msg(&session->filter, msg))
 		return;
 
 found:
@@ -243,13 +254,13 @@ found:
 			.type		= OB_EVENT_CLEAR,
 			.time		= m->Timestamp,
 			.time_len	= sizeof(m->Timestamp),
-			.exchange	= "BZX",
-			.exchange_len	= strlen("BZX"),
+			.exchange	= session->exchange,
+			.exchange_len	= session->exchange_len,
 			.symbol		= symbol,
 			.symbol_len	= strlen(symbol),
 		};
 
-		ob_write_event(out_fd, &event);
+		ob_write_event(session->out_fd, &event);
 
 		g_hash_table_foreach_remove(order_hash, remove_entry, NULL);
 
@@ -275,8 +286,8 @@ found:
 			.type		= OB_EVENT_ADD_ORDER,
 			.time		= m->Timestamp,
 			.time_len	= sizeof(m->Timestamp),
-			.exchange	= "BZX",
-			.exchange_len	= strlen("BZX"),
+			.exchange	= session->exchange,
+			.exchange_len	= session->exchange_len,
 			.symbol		= symbol,
 			.symbol_len	= strlen(symbol),
 			.order_id	= m->OrderID,
@@ -293,7 +304,7 @@ found:
 			},
 		};
 
-		ob_write_event(out_fd, &event);
+		ob_write_event(session->out_fd, &event);
 
 		break;
 	}
@@ -316,8 +327,8 @@ found:
 			.type		= OB_EVENT_ADD_ORDER,
 			.time		= m->Timestamp,
 			.time_len	= sizeof(m->Timestamp),
-			.exchange	= "BZX",
-			.exchange_len	= strlen("BZX"),
+			.exchange	= session->exchange,
+			.exchange_len	= session->exchange_len,
 			.symbol		= symbol,
 			.symbol_len	= strlen(symbol),
 			.order_id	= m->OrderID,
@@ -334,7 +345,7 @@ found:
 			},
 		};
 
-		ob_write_event(out_fd, &event);
+		ob_write_event(session->out_fd, &event);
 
 		break;
 	}
@@ -354,8 +365,8 @@ found:
 			.type		= OB_EVENT_EXECUTE_ORDER,
 			.time		= m->Timestamp,
 			.time_len	= sizeof(m->Timestamp),
-			.exchange	= "BZX",
-			.exchange_len	= strlen("BZX"),
+			.exchange	= session->exchange,
+			.exchange_len	= session->exchange_len,
 			.symbol		= symbol,
 			.symbol_len	= strlen(symbol),
 			.order_id	= m->OrderID,
@@ -372,7 +383,7 @@ found:
 			},
 		};
 
-		ob_write_event(out_fd, &event);
+		ob_write_event(session->out_fd, &event);
 
 		if (!info->remaining) {
 			if (!g_hash_table_remove(order_hash, &info->order_id))
@@ -399,8 +410,8 @@ found:
 			.type		= OB_EVENT_CANCEL_ORDER,
 			.time		= m->Timestamp,
 			.time_len	= sizeof(m->Timestamp),
-			.exchange	= "BZX",
-			.exchange_len	= strlen("BZX"),
+			.exchange	= session->exchange,
+			.exchange_len	= session->exchange_len,
 			.symbol		= symbol,
 			.symbol_len	= strlen(symbol),
 			.order_id	= m->OrderID,
@@ -409,7 +420,7 @@ found:
 			.quantity_len	= sizeof(m->CanceledShares),
 		};
 
-		ob_write_event(out_fd, &event);
+		ob_write_event(session->out_fd, &event);
 
 		if (!info->remaining) {
 			if (!g_hash_table_remove(order_hash, &info->order_id))
@@ -427,8 +438,8 @@ found:
 			.type		= OB_EVENT_TRADE,
 			.time		= m->Timestamp,
 			.time_len	= sizeof(m->Timestamp),
-			.exchange	= "BZX",
-			.exchange_len	= strlen("BZX"),
+			.exchange	= session->exchange,
+			.exchange_len	= session->exchange_len,
 			.symbol		= symbol,
 			.symbol_len	= strlen(symbol),
 			.exec_id	= m->ExecutionID,
@@ -443,7 +454,7 @@ found:
 			},
 		};
 
-		ob_write_event(out_fd, &event);
+		ob_write_event(session->out_fd, &event);
 
 		break;
 	}
@@ -454,8 +465,8 @@ found:
 			.type		= OB_EVENT_TRADE,
 			.time		= m->Timestamp,
 			.time_len	= sizeof(m->Timestamp),
-			.exchange	= "BZX",
-			.exchange_len	= strlen("BZX"),
+			.exchange	= session->exchange,
+			.exchange_len	= session->exchange_len,
 			.symbol		= symbol,
 			.symbol_len	= strlen(symbol),
 			.exec_id	= m->ExecutionID,
@@ -470,7 +481,7 @@ found:
 			},
 		};
 
-		ob_write_event(out_fd, &event);
+		ob_write_event(session->out_fd, &event);
 
 		break;
 	}
@@ -481,15 +492,15 @@ found:
 			.type		= OB_EVENT_STATUS,
 			.time		= m->Timestamp,
 			.time_len	= sizeof(m->Timestamp),
-			.exchange	= "BZX",
-			.exchange_len	= strlen("BZX"),
+			.exchange	= session->exchange,
+			.exchange_len	= session->exchange_len,
 			.symbol		= symbol,
 			.symbol_len	= strlen(symbol),
 			.status		= &m->HaltStatus,
 			.status_len	= sizeof(m->HaltStatus),
 		};
 
-		ob_write_event(out_fd, &event);
+		ob_write_event(session->out_fd, &event);
 
 		break;
 	}
@@ -501,30 +512,27 @@ found:
 
 #define BUFFER_SIZE	(1ULL << 20) /* 1 MB */
 
-static void bats_pitch112_process(int fd, z_stream *zstream, int out_fd)
+static void bats_pitch112_process(struct pitch_session *session)
 {
 	struct buffer *comp_buf, *uncomp_buf;
-	struct pitch_filter filter;
 	struct stream stream;
 	struct stat st;
 
-	pitch_filter_init(&filter);
-
-	if (fstat(fd, &st) < 0)
+	if (fstat(session->in_fd, &st) < 0)
 		error("%s: %s: %s", program, input_filename, strerror(errno));
 
-	comp_buf = buffer_mmap(fd, st.st_size);
+	comp_buf = buffer_mmap(session->in_fd, st.st_size);
 	if (!comp_buf)
 		error("%s: %s: %s", program, input_filename, strerror(errno));
 
-	zstream->next_in = (void *) buffer_start(comp_buf);
+	session->zstream->next_in = (void *) buffer_start(comp_buf);
 
 	uncomp_buf = buffer_new(BUFFER_SIZE);
 	if (!uncomp_buf)
 		error("%s: %s", program, strerror(errno));
 
 	stream = (struct stream) {
-		.zstream	= zstream,
+		.zstream	= session->zstream,
 		.uncomp_buf	= uncomp_buf,
 		.comp_buf	= comp_buf,
 		.progress	= print_progress,
@@ -545,7 +553,7 @@ static void bats_pitch112_process(int fd, z_stream *zstream, int out_fd)
 		if (!msg)
 			break;
 
-		bats_pitch112_write(out_fd, &filter, msg);
+		bats_pitch112_write(session, msg);
 	}
 
 	g_hash_table_destroy(order_hash);
@@ -583,19 +591,32 @@ int cmd_ob(int argc, char *argv[])
 	ob_write_header(out_fd);
 
 	if (!strcmp(format, FORMAT_BATS_PITCH_112)) {
+		struct pitch_session session;
 		struct ob_event event;
 
-		event = (struct ob_event) {
-			.type		= OB_EVENT_DATE,
+		session = (struct pitch_session) {
+			.zstream	= &stream,
+			.in_fd		= in_fd,
+			.out_fd		= out_fd,
 			.time_zone	= "America/New_York",
 			.time_zone_len	= strlen("America/New_York"),
 			.exchange	= "BZX",
 			.exchange_len	= strlen("BZX"),
 		};
 
-		ob_write_event(out_fd, &event);
+		pitch_filter_init(&session.filter);
 
-		bats_pitch112_process(in_fd, &stream, out_fd);
+		event = (struct ob_event) {
+			.type		= OB_EVENT_DATE,
+			.time_zone	= session.time_zone,
+			.time_zone_len	= session.time_zone_len,
+			.exchange	= session.exchange,
+			.exchange_len	= session.exchange_len,
+		};
+
+		ob_write_event(session.out_fd, &event);
+
+		bats_pitch112_process(&session);
 	} else
 		error("%s is not a supported file format", format);
 
