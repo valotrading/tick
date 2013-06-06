@@ -6,6 +6,7 @@
 #include "bats-pitch112.h"
 #include "nasdaq-itch41.h"
 #include "builtins.h"
+#include "format.h"
 #include "stream.h"
 
 #include <sys/types.h>
@@ -27,9 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
-#define FORMAT_BATS_PITCH_112	"bats-pitch-1.12"
-#define FORMAT_NASDAQ_ITCH_41	"nasdaq-itch-4.1"
 
 extern const char *program;
 
