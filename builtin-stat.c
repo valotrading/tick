@@ -84,13 +84,15 @@ static void parse_args(int argc, char *argv[])
 	filename = argv[0];
 }
 
-static uint64_t stats[256];
+struct stats {
+	uint64_t	stats[256];
+};
 
 #define BUFFER_SIZE	(1ULL << 20) /* 1 MB */
 
-static void print_stat(u8 msg_type, const char *name)
+static void print_stat(struct stats *stats, u8 msg_type, const char *name)
 {
-	fprintf(stdout, "%'14.0f  %s\n", (double) stats[msg_type], name);
+	fprintf(stdout, "%'14.0f  %s\n", (double) stats->stats[msg_type], name);
 }
 
 static void print_progress(struct buffer *buf)
@@ -117,26 +119,26 @@ static void release_stream(z_stream *stream)
  * BATS PITCH 1.12
  */
 
-static void bats_pitch112_print_stats(void)
+static void bats_pitch112_print_stats(struct stats *stats)
 {
 	printf(" Message type stats for '%s':\n\n", filename);
 
-	print_stat(PITCH_MSG_SYMBOL_CLEAR,	"Symbol Clear");
-	print_stat(PITCH_MSG_ADD_ORDER_SHORT,	"Add Order (short)");
-	print_stat(PITCH_MSG_ADD_ORDER_LONG,	"Add Order (long)");
-	print_stat(PITCH_MSG_ORDER_EXECUTED,	"Order Executed");
-	print_stat(PITCH_MSG_ORDER_CANCEL,	"Order Cancel");
-	print_stat(PITCH_MSG_TRADE_SHORT,	"Trade (short)");
-	print_stat(PITCH_MSG_TRADE_LONG,	"Trade (long)");
-	print_stat(PITCH_MSG_TRADE_BREAK,	"Trade Break");
-	print_stat(PITCH_MSG_TRADING_STATUS,	"Trading Status");
-	print_stat(PITCH_MSG_AUCTION_UPDATE,	"Auction Update");
-	print_stat(PITCH_MSG_AUCTION_SUMMARY,	"Auction Summary");
+	print_stat(stats, PITCH_MSG_SYMBOL_CLEAR,	"Symbol Clear");
+	print_stat(stats, PITCH_MSG_ADD_ORDER_SHORT,	"Add Order (short)");
+	print_stat(stats, PITCH_MSG_ADD_ORDER_LONG,	"Add Order (long)");
+	print_stat(stats, PITCH_MSG_ORDER_EXECUTED,	"Order Executed");
+	print_stat(stats, PITCH_MSG_ORDER_CANCEL,	"Order Cancel");
+	print_stat(stats, PITCH_MSG_TRADE_SHORT,	"Trade (short)");
+	print_stat(stats, PITCH_MSG_TRADE_LONG,		"Trade (long)");
+	print_stat(stats, PITCH_MSG_TRADE_BREAK,	"Trade Break");
+	print_stat(stats, PITCH_MSG_TRADING_STATUS,	"Trading Status");
+	print_stat(stats, PITCH_MSG_AUCTION_UPDATE,	"Auction Update");
+	print_stat(stats, PITCH_MSG_AUCTION_SUMMARY,	"Auction Summary");
 
 	printf("\n");
 }
 
-static void bats_pitch112_stat(int fd, z_stream *zstream)
+static void bats_pitch112_stat(struct stats *stats, int fd, z_stream *zstream)
 {
 	struct buffer *comp_buf, *uncomp_buf;
 	struct stream stream;
@@ -173,7 +175,7 @@ static void bats_pitch112_stat(int fd, z_stream *zstream)
 		if (!msg)
 			break;
 
-		stats[msg->MessageType]++;
+		stats->stats[msg->MessageType]++;
 	}
 
 	buffer_munmap(comp_buf);
@@ -186,33 +188,33 @@ static void bats_pitch112_stat(int fd, z_stream *zstream)
  * NASDAQ TotalView-ITCH 4.1
  */
 
-static void nasdaq_itch41_print_stats(void)
+static void nasdaq_itch41_print_stats(struct stats *stats)
 {
 	printf(" Message type stats for '%s':\n\n", filename);
 
-	print_stat(ITCH41_MSG_TIMESTAMP_SECONDS,	"Timestamp - Seconds");
-	print_stat(ITCH41_MSG_SYSTEM_EVENT,		"System Event");
-	print_stat(ITCH41_MSG_STOCK_DIRECTORY,		"Stock Directory");
-	print_stat(ITCH41_MSG_STOCK_TRADING_ACTION,	"Stock Trading Action");
-	print_stat(ITCH41_MSG_REG_SHO_RESTRICTION,	"REG SHO Restriction");
-	print_stat(ITCH41_MSG_MARKET_PARTICIPANT_POS,	"Market Participant Position");
-	print_stat(ITCH41_MSG_ADD_ORDER,		"Add Order");
-	print_stat(ITCH41_MSG_ADD_ORDER_MPID,		"Add Order - MPID Attribution");
-	print_stat(ITCH41_MSG_ORDER_EXECUTED,		"Order Executed");
-	print_stat(ITCH41_MSG_ORDER_EXECUTED_WITH_PRICE,"Order Executed With Price");
-	print_stat(ITCH41_MSG_ORDER_CANCEL,		"Order Cancel");
-	print_stat(ITCH41_MSG_ORDER_DELETE,		"Order Delete");
-	print_stat(ITCH41_MSG_ORDER_REPLACE,		"Order Replace");
-	print_stat(ITCH41_MSG_TRADE,			"Trade (non-cross)");
-	print_stat(ITCH41_MSG_CROSS_TRADE,		"Cross Trade");
-	print_stat(ITCH41_MSG_BROKEN_TRADE,		"Broken Trade");
-	print_stat(ITCH41_MSG_NOII,			"NOII");
-	print_stat(ITCH41_MSG_RPII,			"RPII");
+	print_stat(stats, ITCH41_MSG_TIMESTAMP_SECONDS,		"Timestamp - Seconds");
+	print_stat(stats, ITCH41_MSG_SYSTEM_EVENT,		"System Event");
+	print_stat(stats, ITCH41_MSG_STOCK_DIRECTORY,		"Stock Directory");
+	print_stat(stats, ITCH41_MSG_STOCK_TRADING_ACTION,	"Stock Trading Action");
+	print_stat(stats, ITCH41_MSG_REG_SHO_RESTRICTION,	"REG SHO Restriction");
+	print_stat(stats, ITCH41_MSG_MARKET_PARTICIPANT_POS,	"Market Participant Position");
+	print_stat(stats, ITCH41_MSG_ADD_ORDER,			"Add Order");
+	print_stat(stats, ITCH41_MSG_ADD_ORDER_MPID,		"Add Order - MPID Attribution");
+	print_stat(stats, ITCH41_MSG_ORDER_EXECUTED,		"Order Executed");
+	print_stat(stats, ITCH41_MSG_ORDER_EXECUTED_WITH_PRICE,	"Order Executed With Price");
+	print_stat(stats, ITCH41_MSG_ORDER_CANCEL,		"Order Cancel");
+	print_stat(stats, ITCH41_MSG_ORDER_DELETE,		"Order Delete");
+	print_stat(stats, ITCH41_MSG_ORDER_REPLACE,		"Order Replace");
+	print_stat(stats, ITCH41_MSG_TRADE,			"Trade (non-cross)");
+	print_stat(stats, ITCH41_MSG_CROSS_TRADE,		"Cross Trade");
+	print_stat(stats, ITCH41_MSG_BROKEN_TRADE,		"Broken Trade");
+	print_stat(stats, ITCH41_MSG_NOII,			"NOII");
+	print_stat(stats, ITCH41_MSG_RPII,			"RPII");
 
 	printf("\n");
 }
 
-static void nasdaq_itch41_stat(int fd, z_stream *zstream)
+static void nasdaq_itch41_stat(struct stats *stats, int fd, z_stream *zstream)
 {
 	struct buffer *comp_buf, *uncomp_buf;
 	struct stream stream;
@@ -250,7 +252,7 @@ static void nasdaq_itch41_stat(int fd, z_stream *zstream)
 		if (!msg)
 			break;
 
-		stats[msg->MessageType]++;
+		stats->stats[msg->MessageType]++;
 	}
 
 	buffer_munmap(comp_buf);
@@ -277,11 +279,19 @@ int cmd_stat(int argc, char *argv[])
 		error("%s: %s", filename, strerror(errno));
 
 	if (!strcmp(format, FORMAT_NASDAQ_ITCH_41)) {
-		nasdaq_itch41_stat(fd, &stream);
-		nasdaq_itch41_print_stats();
+		struct stats stats;
+
+		memset(&stats, 0, sizeof(stats));
+
+		nasdaq_itch41_stat(&stats, fd, &stream);
+		nasdaq_itch41_print_stats(&stats);
 	} else if (!strcmp(format, FORMAT_BATS_PITCH_112)) {
-		bats_pitch112_stat(fd, &stream);
-		bats_pitch112_print_stats();
+		struct stats stats;
+
+		memset(&stats, 0, sizeof(stats));
+
+		bats_pitch112_stat(&stats, fd, &stream);
+		bats_pitch112_print_stats(&stats);
 	} else
 		error("%s is not a supported file format", format);
 
