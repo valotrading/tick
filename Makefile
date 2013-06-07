@@ -88,6 +88,7 @@ BUILTIN_OBJS += error.o
 BUILTIN_OBJS += nasdaq-itch41.o
 BUILTIN_OBJS += nasdaq-stat.o
 BUILTIN_OBJS += ob.o
+BUILTIN_OBJS += progress.o
 BUILTIN_OBJS += stats.o
 
 #

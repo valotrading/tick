@@ -4,6 +4,7 @@
 #include "libtrading/buffer.h"
 
 #include "nasdaq-itch41.h"
+#include "progress.h"
 #include "stream.h"
 #include "error.h"
 #include "stats.h"
@@ -37,13 +38,6 @@ void nasdaq_itch41_print_stats(struct stats *stats)
 	print_stat(stats, ITCH41_MSG_RPII,			"RPII");
 
 	printf("\n");
-}
-
-static void print_progress(struct buffer *buf)
-{
-	fprintf(stderr, "Processing messages: %3u%%\r", (unsigned int)(buf->start * 100 / buf->capacity));
-
-	fflush(stderr);
 }
 
 #define BUFFER_SIZE	(1ULL << 20) /* 1 MB */

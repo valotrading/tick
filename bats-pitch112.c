@@ -3,6 +3,7 @@
 #include "libtrading/proto/bats_pitch_message.h"
 #include "libtrading/buffer.h"
 
+#include "progress.h"
 #include "decimal.h"
 #include "base10.h"
 #include "base36.h"
@@ -123,13 +124,6 @@ retry_LF:
 	*msg_p = msg;
 
 	return 0;
-}
-
-static void print_progress(struct buffer *buf)
-{
-	fprintf(stderr, "Processing messages: %3u%%\r", (unsigned int)(buf->start * 100 / buf->capacity));
-
-	fflush(stderr);
 }
 
 static struct order_info *

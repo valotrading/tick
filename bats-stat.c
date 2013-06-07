@@ -4,6 +4,7 @@
 #include "libtrading/buffer.h"
 
 #include "bats-pitch112.h"
+#include "progress.h"
 #include "format.h"
 #include "stream.h"
 #include "error.h"
@@ -31,13 +32,6 @@ void bats_pitch112_print_stats(struct stats *stats)
 	print_stat(stats, PITCH_MSG_AUCTION_SUMMARY,	"Auction Summary");
 
 	printf("\n");
-}
-
-static void print_progress(struct buffer *buf)
-{
-	fprintf(stderr, "Processing messages: %3u%%\r", (unsigned int)(buf->start * 100 / buf->capacity));
-
-	fflush(stderr);
 }
 
 #define BUFFER_SIZE	(1ULL << 20) /* 1 MB */
