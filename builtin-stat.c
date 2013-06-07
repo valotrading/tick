@@ -136,7 +136,7 @@ static void bats_pitch112_print_stats(void)
 	printf("\n");
 }
 
-static void bats_pitch112_process(int fd, z_stream *zstream)
+static void bats_pitch112_stat(int fd, z_stream *zstream)
 {
 	struct buffer *comp_buf, *uncomp_buf;
 	struct stream stream;
@@ -212,7 +212,7 @@ static void nasdaq_itch41_print_stats(void)
 	printf("\n");
 }
 
-static void nasdaq_itch41_process(int fd, z_stream *zstream)
+static void nasdaq_itch41_stat(int fd, z_stream *zstream)
 {
 	struct buffer *comp_buf, *uncomp_buf;
 	struct stream stream;
@@ -277,10 +277,10 @@ int cmd_stat(int argc, char *argv[])
 		error("%s: %s", filename, strerror(errno));
 
 	if (!strcmp(format, FORMAT_NASDAQ_ITCH_41)) {
-		nasdaq_itch41_process(fd, &stream);
+		nasdaq_itch41_stat(fd, &stream);
 		nasdaq_itch41_print_stats();
 	} else if (!strcmp(format, FORMAT_BATS_PITCH_112)) {
-		bats_pitch112_process(fd, &stream);
+		bats_pitch112_stat(fd, &stream);
 		bats_pitch112_print_stats();
 	} else
 		error("%s is not a supported file format", format);
