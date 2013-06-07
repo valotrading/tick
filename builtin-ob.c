@@ -39,6 +39,8 @@ struct pitch_session {
 	unsigned long		exchange_len;
 	const char		*time_zone;
 	unsigned long		time_zone_len;
+	GHashTable		*order_hash;
+	GHashTable		*exec_hash;
 };
 
 extern const char *program;
@@ -143,10 +145,8 @@ struct order_info {
  * BATS PITCH 1.12
  */
 
-static GHashTable *order_hash;
-static GHashTable *exec_hash;
-
-static struct order_info *lookup_order(struct pitch_message *msg)
+static struct order_info *
+pitch_session_lookup_order(struct pitch_session *session, struct pitch_message *msg)
 {
 	switch (msg->MessageType) {
 	case PITCH_MSG_ORDER_EXECUTED: {
@@ -155,7 +155,7 @@ static struct order_info *lookup_order(struct pitch_message *msg)
 
 		order_id = base36_decode(m->OrderID, sizeof(m->OrderID));
 
-		return g_hash_table_lookup(order_hash, &order_id);
+		return g_hash_table_lookup(session->order_hash, &order_id);
 	}
 	case PITCH_MSG_ORDER_CANCEL: {
 		struct pitch_msg_order_cancel *m = (void *) msg;
@@ -163,7 +163,7 @@ static struct order_info *lookup_order(struct pitch_message *msg)
 
 		order_id = base36_decode(m->OrderID, sizeof(m->OrderID));
 
-		return g_hash_table_lookup(order_hash, &order_id);
+		return g_hash_table_lookup(session->order_hash, &order_id);
 	}
 	default:
 		break;
@@ -203,8 +203,10 @@ static void pitch_filter_init(struct pitch_filter *filter)
 	memcpy(filter->symbol, symbol, strlen(symbol));
 }
 
-static bool pitch_filter_msg(struct pitch_filter *filter, struct pitch_message *msg)
+static bool pitch_session_filter_msg(struct pitch_session *session, struct pitch_message *msg)
 {
+	struct pitch_filter *filter = &session->filter;
+
 	switch (msg->MessageType) {
 	case PITCH_MSG_SYMBOL_CLEAR: {
 		struct pitch_msg_symbol_clear *m = (void *) msg;
@@ -238,7 +240,7 @@ static bool pitch_filter_msg(struct pitch_filter *filter, struct pitch_message *
 
 		exec_id = base36_decode(m->ExecutionID, sizeof(m->ExecutionID));
 
-		e_info = g_hash_table_lookup(exec_hash, &exec_id);
+		e_info = g_hash_table_lookup(session->exec_hash, &exec_id);
 		if (!e_info)
 			return false;
 
@@ -271,11 +273,11 @@ static void bats_pitch112_write(struct pitch_session *session, struct pitch_mess
 	struct order_info *info = NULL;
 	struct ob_event event;
 
-	info = lookup_order(msg);
+	info = pitch_session_lookup_order(session, msg);
 	if (info)
 		goto found;
 
-	if (!pitch_filter_msg(&session->filter, msg))
+	if (!pitch_session_filter_msg(session, msg))
 		return;
 
 found:
@@ -295,7 +297,7 @@ found:
 
 		ob_write_event(session->out_fd, &event);
 
-		g_hash_table_foreach_remove(order_hash, free_entry, NULL);
+		g_hash_table_foreach_remove(session->order_hash, free_entry, NULL);
 
 		break;
 	}
@@ -313,7 +315,7 @@ found:
 		info->remaining	= base10_decode(m->Shares, sizeof(m->Shares));
 		memcpy(info->price, m->Price, sizeof(m->Price));
 
-		g_hash_table_insert(order_hash, &info->order_id, info);
+		g_hash_table_insert(session->order_hash, &info->order_id, info);
 
 		event = (struct ob_event) {
 			.type		= OB_EVENT_ADD_ORDER,
@@ -354,7 +356,7 @@ found:
 		info->remaining	= base10_decode(m->Shares, sizeof(m->Shares));
 		memcpy(info->price, m->Price, sizeof(m->Price));
 
-		g_hash_table_insert(order_hash, &info->order_id, info);
+		g_hash_table_insert(session->order_hash, &info->order_id, info);
 
 		event = (struct ob_event) {
 			.type		= OB_EVENT_ADD_ORDER,
@@ -402,7 +404,7 @@ found:
 		e_info->exec_id	= exec_id;
 		e_info->symbol	= session->filter.symbol;
 
-		g_hash_table_insert(exec_hash, &e_info->exec_id, e_info);
+		g_hash_table_insert(session->exec_hash, &e_info->exec_id, e_info);
 
 		event = (struct ob_event) {
 			.type		= OB_EVENT_EXECUTE_ORDER,
@@ -429,7 +431,7 @@ found:
 		ob_write_event(session->out_fd, &event);
 
 		if (!info->remaining) {
-			if (!g_hash_table_remove(order_hash, &info->order_id))
+			if (!g_hash_table_remove(session->order_hash, &info->order_id))
 				assert(0);
 
 			free(info);
@@ -466,7 +468,7 @@ found:
 		ob_write_event(session->out_fd, &event);
 
 		if (!info->remaining) {
-			if (!g_hash_table_remove(order_hash, &info->order_id))
+			if (!g_hash_table_remove(session->order_hash, &info->order_id))
 				assert(0);
 
 			free(info);
@@ -485,7 +487,7 @@ found:
 		e_info->exec_id	= exec_id;
 		e_info->symbol	= session->filter.symbol;
 
-		g_hash_table_insert(exec_hash, &e_info->exec_id, e_info);
+		g_hash_table_insert(session->exec_hash, &e_info->exec_id, e_info);
 
 		event = (struct ob_event) {
 			.type		= OB_EVENT_TRADE,
@@ -522,7 +524,7 @@ found:
 		e_info->exec_id	= exec_id;
 		e_info->symbol	= session->filter.symbol;
 
-		g_hash_table_insert(exec_hash, &e_info->exec_id, e_info);
+		g_hash_table_insert(session->exec_hash, &e_info->exec_id, e_info);
 
 		event = (struct ob_event) {
 			.type		= OB_EVENT_TRADE,
@@ -620,12 +622,12 @@ static void bats_pitch112_process(struct pitch_session *session)
 		.progress	= print_progress,
 	};
 
-	exec_hash = g_hash_table_new(g_int_hash, g_int_equal);
-	if (!exec_hash)
+	session->exec_hash = g_hash_table_new(g_int_hash, g_int_equal);
+	if (!session->exec_hash)
 		error("out of memory");
 
-	order_hash = g_hash_table_new(g_int_hash, g_int_equal);
-	if (!order_hash)
+	session->order_hash = g_hash_table_new(g_int_hash, g_int_equal);
+	if (!session->order_hash)
 		error("out of memory");
 
 	for (;;) {
@@ -642,11 +644,11 @@ static void bats_pitch112_process(struct pitch_session *session)
 		bats_pitch112_write(session, msg);
 	}
 
-	g_hash_table_destroy(order_hash);
+	g_hash_table_destroy(session->order_hash);
 
-	g_hash_table_foreach_remove(exec_hash, free_entry, NULL);
+	g_hash_table_foreach_remove(session->exec_hash, free_entry, NULL);
 
-	g_hash_table_destroy(exec_hash);
+	g_hash_table_destroy(session->exec_hash);
 
 	buffer_munmap(comp_buf);
 
