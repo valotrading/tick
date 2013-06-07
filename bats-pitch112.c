@@ -77,7 +77,7 @@ retry_size:
 	buffer_advance(stream->uncomp_buf, sizeof(u8));
 
 retry_message:
-	msg = pitch_message_decode(stream->uncomp_buf);
+	msg = pitch_message_decode(stream->uncomp_buf, 1);
 	if (!msg) {
 		ssize_t nr;
 
@@ -94,25 +94,6 @@ retry_message:
 			stream->progress(stream->comp_buf);
 
 		goto retry_message;
-	}
-
-retry_LF:
-	if (buffer_size(stream->uncomp_buf) < sizeof(u8)) {
-		ssize_t nr;
-
-		buffer_compact(stream->uncomp_buf);
-
-		nr = buffer_inflate(stream->comp_buf, stream->uncomp_buf, stream->zstream);
-		if (nr < 0)
-			return nr;
-
-		if (!nr)
-			return 0;
-
-		if (stream->progress)
-			stream->progress(stream->comp_buf);
-
-		goto retry_LF;
 	}
 
 	ch = buffer_peek_8(stream->uncomp_buf);
