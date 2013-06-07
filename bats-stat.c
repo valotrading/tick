@@ -9,29 +9,30 @@
 #include "stream.h"
 #include "error.h"
 #include "stats.h"
+#include "types.h"
 
 #include <sys/stat.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
 
+static const char *bats_stat_names[256] = {
+	[PITCH_MSG_SYMBOL_CLEAR]	= "Symbol Clear",
+	[PITCH_MSG_ADD_ORDER_SHORT]	= "Add Order (short)",
+	[PITCH_MSG_ADD_ORDER_LONG]	= "Add Order (long)",
+	[PITCH_MSG_ORDER_EXECUTED]	= "Order Executed",
+	[PITCH_MSG_ORDER_CANCEL]	= "Order Cancel",
+	[PITCH_MSG_TRADE_SHORT]		= "Trade (short)",
+	[PITCH_MSG_TRADE_LONG]		= "Trade (long)",
+	[PITCH_MSG_TRADE_BREAK]		= "Trade Break",
+	[PITCH_MSG_TRADING_STATUS]	= "Trading Status",
+	[PITCH_MSG_AUCTION_UPDATE]	= "Auction Update",
+	[PITCH_MSG_AUCTION_SUMMARY]	= "Auction Summary",
+};
+
 void bats_pitch112_print_stats(struct stats *stats)
 {
-	printf(" Message type stats for '%s':\n\n", stats->filename);
-
-	print_stat(stats, PITCH_MSG_SYMBOL_CLEAR,	"Symbol Clear");
-	print_stat(stats, PITCH_MSG_ADD_ORDER_SHORT,	"Add Order (short)");
-	print_stat(stats, PITCH_MSG_ADD_ORDER_LONG,	"Add Order (long)");
-	print_stat(stats, PITCH_MSG_ORDER_EXECUTED,	"Order Executed");
-	print_stat(stats, PITCH_MSG_ORDER_CANCEL,	"Order Cancel");
-	print_stat(stats, PITCH_MSG_TRADE_SHORT,	"Trade (short)");
-	print_stat(stats, PITCH_MSG_TRADE_LONG,		"Trade (long)");
-	print_stat(stats, PITCH_MSG_TRADE_BREAK,	"Trade Break");
-	print_stat(stats, PITCH_MSG_TRADING_STATUS,	"Trading Status");
-	print_stat(stats, PITCH_MSG_AUCTION_UPDATE,	"Auction Update");
-	print_stat(stats, PITCH_MSG_AUCTION_SUMMARY,	"Auction Summary");
-
-	printf("\n");
+	print_stats(stats, bats_stat_names, ARRAY_SIZE(bats_stat_names));
 }
 
 #define BUFFER_SIZE	(1ULL << 20) /* 1 MB */
