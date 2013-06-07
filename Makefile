@@ -113,7 +113,7 @@ define INSTALL_EXEC
         install -v $1 $(DESTDIR)$2/$1 || exit 1;
 endef
 
-install:
+install: $(INST_PROGRAMS)
 	$(E) "  INSTALL"
 	$(Q) install -d $(DESTDIR)$(BINDIR)
 	$(Q) $(foreach f,$(INST_PROGRAMS),$(call INSTALL_EXEC,$f,$(BINDIR)))
