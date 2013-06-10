@@ -1,14 +1,14 @@
-#include "nasdaq-stat.h"
+#include "tick/nasdaq/stat.h"
 
 #include "libtrading/proto/nasdaq_itch41_message.h"
 #include "libtrading/buffer.h"
 
-#include "nasdaq-itch41.h"
-#include "progress.h"
-#include "stream.h"
-#include "error.h"
-#include "stats.h"
-#include "types.h"
+#include "tick/nasdaq/itch-proto.h"
+#include "tick/progress.h"
+#include "tick/stream.h"
+#include "tick/error.h"
+#include "tick/stats.h"
+#include "tick/types.h"
 
 #include <sys/stat.h>
 #include <string.h>

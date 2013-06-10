@@ -1,6 +1,6 @@
-#include "nasdaq-itch41.h"
+#include "tick/nasdaq/itch-proto.h"
 
-#include "stream.h"
+#include "tick/stream.h"
 
 #include "libtrading/proto/nasdaq_itch41_message.h"
 #include "libtrading/buffer.h"

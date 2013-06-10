@@ -52,7 +52,7 @@ EXTRA_WARNINGS += -Wformat
 
 CFLAGS_OPTIMIZE = -O3
 
-CFLAGS = -g -std=gnu99 -Wall -Wextra $(CFLAGS_WERROR) $(CFLAGS_OPTIMIZE) $(EXTRA_WARNINGS)
+CFLAGS = -g -std=gnu99 -Wall -Wextra $(CFLAGS_WERROR) $(CFLAGS_OPTIMIZE) $(EXTRA_WARNINGS) -Iinclude
 ALL_CFLAGS = $(CFLAGS) -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 ALL_LDFLAGS = $(LDFLAGS)
 
@@ -79,14 +79,14 @@ INST_PROGRAMS = tick
 PROGRAMS = tick
 
 BUILTIN_OBJS += base36.o
-BUILTIN_OBJS += bats-pitch112.o
-BUILTIN_OBJS += bats-stat.o
+BUILTIN_OBJS += bats/pitch-proto.o
+BUILTIN_OBJS += bats/stat.o
 BUILTIN_OBJS += builtin-ob.o
 BUILTIN_OBJS += builtin-stat.o
 BUILTIN_OBJS += dsv.o
 BUILTIN_OBJS += error.o
-BUILTIN_OBJS += nasdaq-itch41.o
-BUILTIN_OBJS += nasdaq-stat.o
+BUILTIN_OBJS += nasdaq/itch-proto.o
+BUILTIN_OBJS += nasdaq/stat.o
 BUILTIN_OBJS += ob.o
 BUILTIN_OBJS += progress.o
 BUILTIN_OBJS += stats.o

@@ -1,4 +1,4 @@
-#include "progress.h"
+#include "tick/progress.h"
 
 #include <libtrading/buffer.h>
 
@@ -10,4 +10,3 @@ void print_progress(struct buffer *buf)
 
 	fflush(stderr);
 }
-

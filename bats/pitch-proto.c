@@ -1,17 +1,17 @@
-#include "bats-pitch112.h"
+#include "tick/bats/pitch-proto.h"
 
 #include "libtrading/proto/bats_pitch_message.h"
 #include "libtrading/buffer.h"
 
-#include "progress.h"
-#include "decimal.h"
-#include "base10.h"
-#include "base36.h"
-#include "format.h"
-#include "stream.h"
-#include "error.h"
-#include "types.h"
-#include "ob.h"
+#include "tick/progress.h"
+#include "tick/decimal.h"
+#include "tick/base10.h"
+#include "tick/base36.h"
+#include "tick/format.h"
+#include "tick/stream.h"
+#include "tick/error.h"
+#include "tick/types.h"
+#include "tick/ob.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

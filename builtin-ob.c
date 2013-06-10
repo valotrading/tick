@@ -1,9 +1,9 @@
-#include "builtins.h"
+#include "tick/builtins.h"
 
-#include "bats-pitch112.h"
-#include "format.h"
-#include "error.h"
-#include "ob.h"
+#include "tick/bats/pitch-proto.h"
+#include "tick/format.h"
+#include "tick/error.h"
+#include "tick/ob.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
