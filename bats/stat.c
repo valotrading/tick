@@ -30,14 +30,14 @@ static const char *bats_stat_names[256] = {
 	[PITCH_MSG_AUCTION_SUMMARY]	= "Auction Summary",
 };
 
-void bats_pitch112_print_stats(struct stats *stats)
+void bats_pitch_print_stats(struct stats *stats)
 {
 	print_stats(stats, bats_stat_names, ARRAY_SIZE(bats_stat_names));
 }
 
 #define BUFFER_SIZE	(1ULL << 20) /* 1 MB */
 
-void bats_pitch112_stat(struct stats *stats, int fd, z_stream *zstream)
+void bats_pitch_stat(struct stats *stats, int fd, z_stream *zstream)
 {
 	struct buffer *comp_buf, *uncomp_buf;
 	struct stream stream;
@@ -67,7 +67,7 @@ void bats_pitch112_stat(struct stats *stats, int fd, z_stream *zstream)
 		struct pitch_message *msg;
 		int err;
 
-		err = bats_pitch112_read(&stream, &msg);
+		err = bats_pitch_read(&stream, &msg);
 		if (err)
 			error("%s: %s", stats->filename, strerror(err));
 

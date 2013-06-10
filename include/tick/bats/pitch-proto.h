@@ -27,9 +27,9 @@ struct pitch_session {
 	GHashTable		*exec_hash;
 };
 
-int bats_pitch112_read(struct stream *stream, struct pitch_message **msg_p);
+int bats_pitch_read(struct stream *stream, struct pitch_message **msg_p);
 int pitch_file_parse_date(const char *filename, char *buf, size_t buf_len);
 void pitch_filter_init(struct pitch_filter *filter, const char *symbol);
-void bats_pitch112_process(struct pitch_session *session);
+void bats_pitch_ob(struct pitch_session *session);
 
 #endif

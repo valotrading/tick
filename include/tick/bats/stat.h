@@ -5,7 +5,7 @@
 
 struct stats;
 
-void bats_pitch112_print_stats(struct stats *stats);
-void bats_pitch112_stat(struct stats *stats, int fd, z_stream *zstream);
+void bats_pitch_print_stats(struct stats *stats);
+void bats_pitch_stat(struct stats *stats, int fd, z_stream *zstream);
 
 #endif

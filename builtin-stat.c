@@ -110,8 +110,8 @@ int cmd_stat(int argc, char *argv[])
 			.filename	= filename,
 		};
 
-		nasdaq_itch41_stat(&stats, fd, &stream);
-		nasdaq_itch41_print_stats(&stats);
+		nasdaq_itch_stat(&stats, fd, &stream);
+		nasdaq_itch_print_stats(&stats);
 	} else if (!strcmp(format, FORMAT_BATS_PITCH_112)) {
 		struct stats stats;
 
@@ -119,8 +119,8 @@ int cmd_stat(int argc, char *argv[])
 			.filename	= filename,
 		};
 
-		bats_pitch112_stat(&stats, fd, &stream);
-		bats_pitch112_print_stats(&stats);
+		bats_pitch_stat(&stats, fd, &stream);
+		bats_pitch_print_stats(&stats);
 	} else
 		error("%s is not a supported file format", format);
 

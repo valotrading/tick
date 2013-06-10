@@ -160,7 +160,7 @@ static gboolean free_entry(gpointer __maybe_unused key, gpointer __maybe_unused 
 	return TRUE;
 }
 
-static void bats_pitch112_write(struct pitch_session *session, struct pitch_message *msg)
+static void bats_pitch_write(struct pitch_session *session, struct pitch_message *msg)
 {
 	struct order_info *info = NULL;
 	struct ob_event event;
@@ -488,7 +488,7 @@ found:
 
 #define BUFFER_SIZE	(1ULL << 20) /* 1 MB */
 
-void bats_pitch112_process(struct pitch_session *session)
+void bats_pitch_ob(struct pitch_session *session)
 {
 	struct buffer *comp_buf, *uncomp_buf;
 	struct stream stream;
@@ -526,14 +526,14 @@ void bats_pitch112_process(struct pitch_session *session)
 		struct pitch_message *msg;
 		int err;
 
-		err = bats_pitch112_read(&stream, &msg);
+		err = bats_pitch_read(&stream, &msg);
 		if (err)
 			error("%s: %s", session->input_filename, strerror(err));
 
 		if (!msg)
 			break;
 
-		bats_pitch112_write(session, msg);
+		bats_pitch_write(session, msg);
 	}
 
 	g_hash_table_destroy(session->order_hash);

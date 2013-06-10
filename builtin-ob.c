@@ -162,7 +162,7 @@ int cmd_ob(int argc, char *argv[])
 
 		ob_write_event(session.out_fd, &event);
 
-		bats_pitch112_process(&session);
+		bats_pitch_ob(&session);
 	} else
 		error("%s is not a supported file format", format);
 

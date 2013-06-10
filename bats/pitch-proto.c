@@ -7,7 +7,7 @@
 
 #include <errno.h>
 
-int bats_pitch112_read(struct stream *stream, struct pitch_message **msg_p)
+int bats_pitch_read(struct stream *stream, struct pitch_message **msg_p)
 {
 	struct pitch_message *msg;
 	unsigned char ch;

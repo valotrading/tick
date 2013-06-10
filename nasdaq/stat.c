@@ -36,14 +36,14 @@ static const char *nasdaq_stat_names[256] = {
 	[ITCH41_MSG_RPII]			= "RPII",
 };
 
-void nasdaq_itch41_print_stats(struct stats *stats)
+void nasdaq_itch_print_stats(struct stats *stats)
 {
 	print_stats(stats, nasdaq_stat_names, ARRAY_SIZE(nasdaq_stat_names));
 }
 
 #define BUFFER_SIZE	(1ULL << 20) /* 1 MB */
 
-void nasdaq_itch41_stat(struct stats *stats, int fd, z_stream *zstream)
+void nasdaq_itch_stat(struct stats *stats, int fd, z_stream *zstream)
 {
 	struct buffer *comp_buf, *uncomp_buf;
 	struct stream stream;
@@ -74,7 +74,7 @@ void nasdaq_itch41_stat(struct stats *stats, int fd, z_stream *zstream)
 		struct itch41_message *msg;
 		int err;
 
-		err = nasdaq_itch41_read(&stream, &msg);
+		err = nasdaq_itch_read(&stream, &msg);
 		if (err)
 			error("%s: %s", stats->filename, strerror(err));
 

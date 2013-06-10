@@ -4,6 +4,6 @@
 struct itch41_message;
 struct stream;
 
-int nasdaq_itch41_read(struct stream *stream, struct itch41_message **msg_p);
+int nasdaq_itch_read(struct stream *stream, struct itch41_message **msg_p);
 
 #endif
