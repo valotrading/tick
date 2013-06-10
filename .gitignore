@@ -1,3 +1,3 @@
-tick
 *.o
-tags
+/tags
+/tick
