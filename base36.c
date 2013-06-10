@@ -1,4 +1,4 @@
-#include "base36.h"
+#include "tick/base36.h"
 
 unsigned char base36_table[64] = {
 	[BASE36_DIGIT('0')] = 0,

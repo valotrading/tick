@@ -1,10 +1,10 @@
-#include "builtins.h"
+#include "tick/builtins.h"
 
-#include "nasdaq-stat.h"
-#include "bats-stat.h"
-#include "format.h"
-#include "error.h"
-#include "stats.h"
+#include "tick/nasdaq/stat.h"
+#include "tick/bats/stat.h"
+#include "tick/format.h"
+#include "tick/error.h"
+#include "tick/stats.h"
 
 #include <getopt.h>
 #include <libgen.h>
