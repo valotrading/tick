@@ -80,6 +80,7 @@ PROGRAMS = tick
 
 BUILTIN_OBJS += base36.o
 BUILTIN_OBJS += bats/ob.o
+BUILTIN_OBJS += bats/pitch-proto.o
 BUILTIN_OBJS += bats/stat.o
 BUILTIN_OBJS += builtin-ob.o
 BUILTIN_OBJS += builtin-stat.o
