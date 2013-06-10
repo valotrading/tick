@@ -1,7 +1,7 @@
-#include "ob.h"
+#include "tick/ob.h"
 
-#include "types.h"
-#include "dsv.h"
+#include "tick/types.h"
+#include "tick/dsv.h"
 
 #include <unistd.h>
 

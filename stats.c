@@ -1,4 +1,4 @@
-#include "stats.h"
+#include "tick/stats.h"
 
 #include <ctype.h>
 #include <stdio.h>
