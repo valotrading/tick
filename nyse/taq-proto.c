@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 
 #define MIC_LEN		4
 #define MIC_ID(id)	((unsigned int)(id))
@@ -47,9 +48,24 @@ size_t nyse_taq_nr_mic(void)
 	return strlen(mic_ids);
 }
 
-static void nyse_taq_record_count_skip(struct stream *stream)
+static int parse_date(struct stream *stream, char *dst, size_t dst_len)
 {
+	char buf[10];
 	int nr;
+
+	if (buffer_size(stream->uncomp_buf) < sizeof(buf)) {
+		buffer_compact(stream->uncomp_buf);
+
+		nr = buffer_inflate(stream->comp_buf, stream->uncomp_buf, stream->zstream);
+		if (nr <= 0)
+			return -1;
+	}
+
+	buffer_get_n(stream->uncomp_buf, sizeof(buf), buf);
+
+	snprintf(dst, dst_len, "%c%c%c%c-%c%c-%c%c",
+		buf[6], buf[7], buf[8], buf[9],
+		buf[2], buf[3], buf[4], buf[5]);
 
 	while (true) {
 		if (buffer_size(stream->uncomp_buf) == 0) {
@@ -57,15 +73,14 @@ static void nyse_taq_record_count_skip(struct stream *stream)
 
 			nr = buffer_inflate(stream->comp_buf, stream->uncomp_buf, stream->zstream);
 			if (nr <= 0)
-				return;
-
-			if (stream->progress)
-				stream->progress(stream->comp_buf);
+				break;
 		}
 
 		if (buffer_get_8(stream->uncomp_buf) == '\n')
-			return;
+			break;
 	}
+
+	return 0;
 }
 
 int nyse_taq_msg_daily_trade_read(struct stream *stream,
@@ -205,6 +220,9 @@ void nyse_taq_taq(struct nyse_taq_session *session)
 	struct buffer *comp_buf, *uncomp_buf;
 	struct stream stream;
 	struct stat st;
+	char date_buf[11];
+	unsigned int ndx;
+	struct taq_event event;
 
 	if (fstat(session->in_fd, &st) < 0)
 		error("%s: %s", session->input_filename, strerror(errno));
@@ -226,7 +244,25 @@ void nyse_taq_taq(struct nyse_taq_session *session)
 		.progress	= print_progress,
 	};
 
-	nyse_taq_record_count_skip(&stream);
+	if (parse_date(&stream, date_buf, sizeof(date_buf)) < 0)
+		error("%s: Cannot parse date", session->input_filename);
+
+	if (!session->date)
+		session->date = date_buf;
+
+	for (ndx = 0; ndx < nyse_taq_nr_mic(); ndx++) {
+		event = (struct taq_event) {
+			.type		= TAQ_EVENT_DATE,
+			.date		= session->date,
+			.date_len	= strlen(session->date),
+			.time_zone	= session->time_zone,
+			.time_zone_len	= session->time_zone_len,
+			.exchange	= nyse_taq_mic(ndx),
+			.exchange_len	= strlen(nyse_taq_mic(ndx)),
+		};
+
+		taq_write_event(session->out_fd, &event);
+	}
 
 	for (;;) {
 		struct nyse_taq_msg_daily_trade *msg;

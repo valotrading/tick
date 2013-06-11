@@ -25,9 +25,12 @@ struct nyse_taq_session {
 	int			in_fd;
 	int			out_fd;
 	const char		*input_filename;
+	const char		*date;
 	const char		*time_zone;
 	size_t			time_zone_len;
 };
+
+int nyse_taq_parse_date(struct stream *stream, char *buf, size_t len);
 
 void nyse_taq_taq(struct nyse_taq_session *);
 

@@ -23,6 +23,7 @@ static void usage(void)
 "\n"									\
 "    -s, --symbol <symbol> symbol\n"					\
 "    -f, --format <format> input file format\n"				\
+"    -d, --date <date>     date\n"					\
 "\n Supported file formats are:\n"					\
 "\n"									\
 "   %s\n"								\
@@ -37,6 +38,7 @@ static void usage(void)
 }
 
 static const struct option options[] = {
+	{ "date",	required_argument,	NULL, 'd' },
 	{ "format",	required_argument, 	NULL, 'f' },
 	{ "symbol",	required_argument,	NULL, 's' },
 	{ NULL,		0,			NULL,  0  },
@@ -44,6 +46,7 @@ static const struct option options[] = {
 
 static const char	*output_filename;
 static const char	*input_filename;
+static const char	*date;
 static const char	*format;
 static const char	*symbol;
 
@@ -51,13 +54,16 @@ static void parse_args(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt_long(argc, argv, "f:s:", options, NULL)) != -1) {
+	while ((opt = getopt_long(argc, argv, "f:s:d:", options, NULL)) != -1) {
 		switch (opt) {
 		case 's':
 			symbol		= optarg;
 			break;
 		case 'f':
 			format		= optarg;
+			break;
+		case 'd':
+			date		= optarg;
 			break;
 		default:
 			usage();
@@ -116,31 +122,18 @@ int cmd_taq(int argc, char *argv[])
 	switch (fmt) {
 	case FORMAT_NYSE_TAQ_17: {
 		struct nyse_taq_session	session;
-		struct taq_event	event;
-		unsigned int		ndx;
 
 		session = (struct nyse_taq_session) {
 			.zstream	= &stream,
 			.in_fd		= in_fd,
 			.out_fd		= out_fd,
 			.input_filename	= input_filename,
+			.date           = date,
 			.time_zone	= "America/New_York",
 			.time_zone_len	= strlen("America/New_York"),
 		};
 
 		nyse_taq_filter_init(&session.filter, symbol);
-
-		for (ndx = 0; ndx < nyse_taq_nr_mic(); ndx++) {
-			event = (struct taq_event) {
-				.type		= TAQ_EVENT_DATE,
-				.time_zone	= session.time_zone,
-				.time_zone_len	= session.time_zone_len,
-				.exchange	= nyse_taq_mic(ndx),
-				.exchange_len	= strlen(nyse_taq_mic(ndx)),
-			};
-
-			taq_write_event(session.out_fd, &event);
-		}
 
 		nyse_taq_taq(&session);
 		break;
