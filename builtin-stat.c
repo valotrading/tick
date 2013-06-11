@@ -32,8 +32,8 @@ static void usage(void)
 "\n"
 	fprintf(stderr, FMT,
 			program,
-			FORMAT_BATS_PITCH_112,
-			FORMAT_NASDAQ_ITCH_41);
+			format_names[FORMAT_BATS_PITCH_112],
+			format_names[FORMAT_NASDAQ_ITCH_41]);
 
 #undef FMT
 
@@ -87,6 +87,7 @@ static void release_stream(z_stream *stream)
 
 int cmd_stat(int argc, char *argv[])
 {
+	enum format fmt;
 	z_stream stream;
 	int fd;
 
@@ -103,7 +104,10 @@ int cmd_stat(int argc, char *argv[])
 	if (fd < 0)
 		error("%s: %s", filename, strerror(errno));
 
-	if (!strcmp(format, FORMAT_NASDAQ_ITCH_41)) {
+	fmt = parse_format(format);
+
+	switch (fmt) {
+	case FORMAT_NASDAQ_ITCH_41: {
 		struct stats stats;
 
 		stats = (struct stats) {
@@ -112,7 +116,10 @@ int cmd_stat(int argc, char *argv[])
 
 		nasdaq_itch_stat(&stats, fd, &stream);
 		nasdaq_itch_print_stats(&stats);
-	} else if (!strcmp(format, FORMAT_BATS_PITCH_112)) {
+
+		break;
+	}
+	case FORMAT_BATS_PITCH_112: {
 		struct stats stats;
 
 		stats = (struct stats) {
@@ -121,8 +128,14 @@ int cmd_stat(int argc, char *argv[])
 
 		bats_pitch_stat(&stats, fd, &stream);
 		bats_pitch_print_stats(&stats);
-	} else
+
+		break;
+	}
+	default:
 		error("%s is not a supported file format", format);
+
+		break;
+	}
 
 	printf("\n");
 

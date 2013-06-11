@@ -1,7 +1,13 @@
 #ifndef TICK_FORMAT_H
 #define TICK_FORMAT_H
 
-#define FORMAT_BATS_PITCH_112	"bats-pitch-1.12"
-#define FORMAT_NASDAQ_ITCH_41	"nasdaq-itch-4.1"
+enum format {
+	FORMAT_BATS_PITCH_112,
+	FORMAT_NASDAQ_ITCH_41,
+};
+
+extern const char *format_names[];
+
+enum format parse_format(const char *name);
 
 #endif

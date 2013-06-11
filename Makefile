@@ -86,6 +86,7 @@ BUILTIN_OBJS += builtin-ob.o
 BUILTIN_OBJS += builtin-stat.o
 BUILTIN_OBJS += dsv.o
 BUILTIN_OBJS += error.o
+BUILTIN_OBJS += format.o
 BUILTIN_OBJS += nasdaq/itch-proto.o
 BUILTIN_OBJS += nasdaq/stat.o
 BUILTIN_OBJS += ob.o

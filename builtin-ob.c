@@ -31,7 +31,7 @@ static void usage(void)
 "\n"
 	fprintf(stderr, FMT,
 			program,
-			FORMAT_BATS_PITCH_112);
+			format_names[FORMAT_BATS_PITCH_112]);
 
 #undef FMT
 
@@ -99,6 +99,7 @@ static void release_stream(z_stream *stream)
 int cmd_ob(int argc, char *argv[])
 {
 	int in_fd, out_fd;
+	enum format fmt;
 	z_stream stream;
 
 	setlocale(LC_ALL, "");
@@ -123,7 +124,10 @@ int cmd_ob(int argc, char *argv[])
 
 	ob_write_header(out_fd);
 
-	if (!strcmp(format, FORMAT_BATS_PITCH_112)) {
+	fmt = parse_format(format);
+
+	switch (fmt) {
+	case FORMAT_BATS_PITCH_112: {
 		struct pitch_session session;
 		struct ob_event event;
 		char date_buf[11];
@@ -163,8 +167,15 @@ int cmd_ob(int argc, char *argv[])
 		ob_write_event(session.out_fd, &event);
 
 		bats_pitch_ob(&session);
-	} else
+
+		break;
+	}
+	case FORMAT_NASDAQ_ITCH_41:
+	default:
 		error("%s is not a supported file format", format);
+
+		break;
+	}
 
 	printf("\n");
 
