@@ -5,6 +5,8 @@
 
 #include "tick/stream.h"
 
+#include <string.h>
+#include <stdio.h>
 #include <errno.h>
 
 int bats_pitch_read(struct stream *stream, struct pitch_message **msg_p)
@@ -68,4 +70,35 @@ retry_message:
 	*msg_p = msg;
 
 	return 0;
+}
+
+#define PITCH_FILENAME_DATE_LEN		8
+#define PITCH_FILENAME_EXT		".dat.gz"
+#define PITCH_FILENAME_SUFFIX_LEN	(PITCH_FILENAME_DATE_LEN + strlen(PITCH_FILENAME_EXT))
+
+int pitch_file_parse_date(const char *filename, char *buf, size_t buf_len)
+{
+	const char *suffix;
+	size_t len;
+
+	len = strlen(filename);
+	if (len < PITCH_FILENAME_SUFFIX_LEN)
+		return -EINVAL;
+
+	suffix = filename + len - PITCH_FILENAME_SUFFIX_LEN;
+
+	if (memcmp(suffix + PITCH_FILENAME_DATE_LEN, PITCH_FILENAME_EXT, strlen(PITCH_FILENAME_EXT)))
+		return -EINVAL;
+
+	snprintf(buf, buf_len, "%c%c%c%c-%c%c-%c%c",
+		suffix[0], suffix[1], suffix[2], suffix[3],
+		suffix[4], suffix[5], suffix[6], suffix[7]);
+
+	return 0;
+}
+
+void pitch_filter_init(struct pitch_filter *filter, const char *symbol)
+{
+	memset(filter->symbol, ' ', sizeof(filter->symbol));
+	memcpy(filter->symbol, symbol, strlen(symbol));
 }

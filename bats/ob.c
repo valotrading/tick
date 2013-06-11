@@ -15,15 +15,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <inttypes.h>
 #include <assert.h>
-#include <getopt.h>
-#include <locale.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <glib.h>
 
 struct exec_info {
@@ -39,10 +34,6 @@ struct order_info {
 
 #define PITCH_PRICE_INT_LEN		6
 #define PITCH_PRICE_FRACTION_LEN	4
-
-#define PITCH_FILENAME_DATE_LEN		8
-#define PITCH_FILENAME_EXT		".dat.gz"
-#define PITCH_FILENAME_SUFFIX_LEN	(PITCH_FILENAME_DATE_LEN + strlen(PITCH_FILENAME_EXT))
 
 static struct order_info *
 pitch_session_lookup_order(struct pitch_session *session, struct pitch_message *msg)
@@ -69,33 +60,6 @@ pitch_session_lookup_order(struct pitch_session *session, struct pitch_message *
 	}
 
 	return NULL;
-}
-
-int pitch_file_parse_date(const char *filename, char *buf, size_t buf_len)
-{
-	const char *suffix;
-	size_t len;
-
-	len = strlen(filename);
-	if (len < PITCH_FILENAME_SUFFIX_LEN)
-		return -EINVAL;
-
-	suffix = filename + len - PITCH_FILENAME_SUFFIX_LEN;
-
-	if (memcmp(suffix + PITCH_FILENAME_DATE_LEN, PITCH_FILENAME_EXT, strlen(PITCH_FILENAME_EXT)))
-		return -EINVAL;
-
-	snprintf(buf, buf_len, "%c%c%c%c-%c%c-%c%c",
-		suffix[0], suffix[1], suffix[2], suffix[3],
-		suffix[4], suffix[5], suffix[6], suffix[7]);
-
-	return 0;
-}
-
-void pitch_filter_init(struct pitch_filter *filter, const char *symbol)
-{
-	memset(filter->symbol, ' ', sizeof(filter->symbol));
-	memcpy(filter->symbol, symbol, strlen(symbol));
 }
 
 static bool pitch_session_filter_msg(struct pitch_session *session, struct pitch_message *msg)
