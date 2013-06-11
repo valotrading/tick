@@ -1,12 +1,11 @@
 #include "tick/builtins.h"
 
-#include "tick/bats/pitch-proto.h"
+#include "tick/nyse/taq-proto.h"
 #include "tick/format.h"
+#include "tick/stream.h"
 #include "tick/error.h"
-#include "tick/ob.h"
+#include "tick/taq.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <getopt.h>
 #include <locale.h>
 #include <stdlib.h>
@@ -20,18 +19,17 @@ extern const char *program;
 static void usage(void)
 {
 #define FMT								\
-"\n usage: %s ob [<options>] <input> <output>\n"			\
+"\n usage: %s taq [<options>] <input> <output>\n"			\
 "\n"									\
 "    -s, --symbol <symbol> symbol\n"					\
 "    -f, --format <format> input file format\n"				\
-"    -d, --date <date>     date\n"					\
 "\n Supported file formats are:\n"					\
 "\n"									\
 "   %s\n"								\
 "\n"
 	fprintf(stderr, FMT,
 			program,
-			format_names[FORMAT_BATS_PITCH_112]);
+			format_names[FORMAT_NYSE_TAQ_17]);
 
 #undef FMT
 
@@ -39,15 +37,13 @@ static void usage(void)
 }
 
 static const struct option options[] = {
-	{ "date",	required_argument,	NULL, 'd' },
 	{ "format",	required_argument, 	NULL, 'f' },
-	{ "symbol",	required_argument, 	NULL, 's' },
+	{ "symbol",	required_argument,	NULL, 's' },
 	{ NULL,		0,			NULL,  0  },
 };
 
 static const char	*output_filename;
 static const char	*input_filename;
-static const char	*date;
 static const char	*format;
 static const char	*symbol;
 
@@ -55,16 +51,13 @@ static void parse_args(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt_long(argc, argv, "s:f:d:", options, NULL)) != -1) {
+	while ((opt = getopt_long(argc, argv, "f:s:", options, NULL)) != -1) {
 		switch (opt) {
 		case 's':
 			symbol		= optarg;
 			break;
 		case 'f':
 			format		= optarg;
-			break;
-		case 'd':
-			date		= optarg;
 			break;
 		default:
 			usage();
@@ -78,7 +71,7 @@ static void parse_args(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	input_filename	= argv[0];
+	input_filename = argv[0];
 	output_filename = argv[1];
 }
 
@@ -90,13 +83,7 @@ static void init_stream(z_stream *stream)
 		error("unable to initialize zlib");
 }
 
-static void release_stream(z_stream *stream)
-{
-	inflateEnd(stream);
-}
-
-
-int cmd_ob(int argc, char *argv[])
+int cmd_taq(int argc, char *argv[])
 {
 	int in_fd, out_fd;
 	enum format fmt;
@@ -122,56 +109,44 @@ int cmd_ob(int argc, char *argv[])
 	if (out_fd < 0)
 		error("%s: %s", output_filename, strerror(errno));
 
-	ob_write_header(out_fd);
+	taq_write_header(out_fd);
 
 	fmt = parse_format(format);
 
 	switch (fmt) {
-	case FORMAT_BATS_PITCH_112: {
-		struct pitch_session session;
-		struct ob_event event;
-		char date_buf[11];
+	case FORMAT_NYSE_TAQ_17: {
+		struct nyse_taq_session	session;
+		struct taq_event	event;
+		unsigned int		ndx;
 
-		if (!date) {
-			if (pitch_file_parse_date(input_filename, date_buf, sizeof(date_buf)) < 0)
-				error("%s: unable to parse date from filename", input_filename);
-
-			date = date_buf;
-		}
-
-		session = (struct pitch_session) {
+		session = (struct nyse_taq_session) {
 			.zstream	= &stream,
 			.in_fd		= in_fd,
 			.out_fd		= out_fd,
 			.input_filename	= input_filename,
 			.time_zone	= "America/New_York",
 			.time_zone_len	= strlen("America/New_York"),
-			.exchange	= "BATS",
-			.exchange_len	= strlen("BATS"),
-			.symbol		= symbol,
-			.symbol_len	= strlen(symbol),
 		};
 
-		pitch_filter_init(&session.filter, symbol);
+		nyse_taq_filter_init(&session.filter, symbol);
 
-		event = (struct ob_event) {
-			.type		= OB_EVENT_DATE,
-			.date		= date,
-			.date_len	= strlen(date),
-			.time_zone	= session.time_zone,
-			.time_zone_len	= session.time_zone_len,
-			.exchange	= session.exchange,
-			.exchange_len	= session.exchange_len,
-		};
+		for (ndx = 0; ndx < nyse_taq_nr_mic(); ndx++) {
+			event = (struct taq_event) {
+				.type		= TAQ_EVENT_DATE,
+				.time_zone	= session.time_zone,
+				.time_zone_len	= session.time_zone_len,
+				.exchange	= nyse_taq_mic(ndx),
+				.exchange_len	= strlen(nyse_taq_mic(ndx)),
+			};
 
-		ob_write_event(session.out_fd, &event);
+			taq_write_event(session.out_fd, &event);
+		}
 
-		bats_pitch_ob(&session);
-
+		nyse_taq_taq(&session);
 		break;
 	}
+	case FORMAT_BATS_PITCH_112:
 	case FORMAT_NASDAQ_ITCH_41:
-	case FORMAT_NYSE_TAQ_17:
 	default:
 		error("%s is not a supported file format", format);
 
@@ -185,8 +160,6 @@ int cmd_ob(int argc, char *argv[])
 
 	if (close(out_fd) < 0)
 		error("%s: %s", output_filename, strerror(errno));
-
-	release_stream(&stream);
 
 	return 0;
 }
