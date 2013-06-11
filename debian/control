@@ -1,0 +1,13 @@
+Source: tick
+Priority: extra
+Maintainer: Valo Engineering <engineering@valotrading.com>
+Section: utils
+Standards-Version: 3.9.2
+Build-Depends: libglib2.0-0
+
+Package: tick
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Tool for inspecting and converting market data files
+ A tool for inspecting and converting market data files. It uses
+ Libtrading for market data file parsing.
