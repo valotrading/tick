@@ -3,6 +3,7 @@
 #include "libtrading/proto/bats_pitch_message.h"
 #include "libtrading/buffer.h"
 
+#include "tick/base36.h"
 #include "tick/stream.h"
 
 #include <string.h>
@@ -101,4 +102,86 @@ void pitch_filter_init(struct pitch_filter *filter, const char *symbol)
 {
 	memset(filter->symbol, ' ', sizeof(filter->symbol));
 	memcpy(filter->symbol, symbol, strlen(symbol));
+}
+
+struct pitch_order_info *
+pitch_session_lookup_order(struct pitch_session *session, struct pitch_message *msg)
+{
+	switch (msg->MessageType) {
+	case PITCH_MSG_ORDER_EXECUTED: {
+		struct pitch_msg_order_executed *m = (void *) msg;
+		unsigned long order_id;
+
+		order_id = base36_decode(m->OrderID, sizeof(m->OrderID));
+
+		return g_hash_table_lookup(session->order_hash, &order_id);
+	}
+	case PITCH_MSG_ORDER_CANCEL: {
+		struct pitch_msg_order_cancel *m = (void *) msg;
+		unsigned long order_id;
+
+		order_id = base36_decode(m->OrderID, sizeof(m->OrderID));
+
+		return g_hash_table_lookup(session->order_hash, &order_id);
+	}
+	default:
+		break;
+	}
+
+	return NULL;
+}
+
+bool pitch_session_filter_msg(struct pitch_session *session, struct pitch_message *msg)
+{
+	struct pitch_filter *filter = &session->filter;
+
+	switch (msg->MessageType) {
+	case PITCH_MSG_SYMBOL_CLEAR: {
+		struct pitch_msg_symbol_clear *m = (void *) msg;
+
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
+	}
+	case PITCH_MSG_ADD_ORDER_SHORT: {
+		struct pitch_msg_add_order_short *m = (void *) msg;
+
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
+	}
+	case PITCH_MSG_ADD_ORDER_LONG: {
+		struct pitch_msg_add_order_long *m = (void *) msg;
+
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
+	}
+	case PITCH_MSG_TRADE_SHORT: {
+		struct pitch_msg_trade_short *m = (void *) msg;
+
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
+	}
+	case PITCH_MSG_TRADE_LONG: {
+		struct pitch_msg_trade_long *m = (void *) msg;
+
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
+	}
+	case PITCH_MSG_TRADE_BREAK: {
+		struct pitch_msg_trade_break *m = (void *) msg;
+		struct pitch_exec_info *e_info;
+		unsigned long exec_id;
+
+		exec_id = base36_decode(m->ExecutionID, sizeof(m->ExecutionID));
+
+		e_info = g_hash_table_lookup(session->exec_hash, &exec_id);
+		if (!e_info)
+			return false;
+
+		return !memcmp(e_info->symbol, filter->symbol, 6);
+	}
+	case PITCH_MSG_TRADING_STATUS: {
+		struct pitch_msg_trading_status *m = (void *) msg;
+
+		return !memcmp(m->StockSymbol, filter->symbol, sizeof(m->StockSymbol));
+	}
+	default:
+		break;
+	}
+
+	return false;
 }
