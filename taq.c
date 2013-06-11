@@ -16,6 +16,7 @@ static const char *column_names[] = {
 	"TradeQuantity",
 	"TradePrice",
 	"TradeSide",
+	"Status",
 	"TradeType",
 	"BidQuantity1",
 	"BidPrice1",
