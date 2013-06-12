@@ -4,9 +4,6 @@
 #include <stddef.h>
 #include <zlib.h>
 
-const char *nyse_taq_mic(unsigned int ndx);
-size_t nyse_taq_nr_mic(void);
-
 struct nyse_taq_filter {
 	char			symbol[6];
 };

@@ -38,12 +38,12 @@ const char *mic[128] = {
 
 const char mic_ids[] = "ABCDIJKMNTPSQWXYZ";
 
-const char *nyse_taq_mic(unsigned int ndx)
+static const char *mic_by_index(unsigned int ndx)
 {
 	return mic[MIC_ID(mic_ids[ndx])];
 }
 
-size_t nyse_taq_nr_mic(void)
+static size_t nr_mic(void)
 {
 	return strlen(mic_ids);
 }
@@ -250,15 +250,15 @@ void nyse_taq_taq(struct nyse_taq_session *session)
 	if (!session->date)
 		session->date = date_buf;
 
-	for (ndx = 0; ndx < nyse_taq_nr_mic(); ndx++) {
+	for (ndx = 0; ndx < nr_mic(); ndx++) {
 		event = (struct taq_event) {
 			.type		= TAQ_EVENT_DATE,
 			.date		= session->date,
 			.date_len	= strlen(session->date),
 			.time_zone	= session->time_zone,
 			.time_zone_len	= session->time_zone_len,
-			.exchange	= nyse_taq_mic(ndx),
-			.exchange_len	= strlen(nyse_taq_mic(ndx)),
+			.exchange	= mic_by_index(ndx),
+			.exchange_len	= strlen(mic_by_index(ndx)),
 		};
 
 		taq_write_event(session->out_fd, &event);
