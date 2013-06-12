@@ -13,6 +13,12 @@
 #include <errno.h>
 #include <stdio.h>
 
+enum file_type {
+	FILE_TYPE_UNKNOWN,
+	FILE_TYPE_DAILY_QUOTE,
+	FILE_TYPE_DAILY_TRADE,
+};
+
 #define MIC_LEN		4
 #define MIC_ID(id)	((unsigned int)(id))
 
@@ -48,8 +54,9 @@ static size_t nr_mic(void)
 	return strlen(mic_ids);
 }
 
-static int parse_date(struct stream *stream, char *dst, size_t dst_len)
+static enum file_type parse_header(struct stream *stream, char *dst, size_t dst_len)
 {
+	unsigned int count;
 	char buf[10];
 	int nr;
 
@@ -58,10 +65,12 @@ static int parse_date(struct stream *stream, char *dst, size_t dst_len)
 
 		nr = buffer_inflate(stream->comp_buf, stream->uncomp_buf, stream->zstream);
 		if (nr <= 0)
-			return -1;
+			return FILE_TYPE_UNKNOWN;
 	}
 
 	buffer_get_n(stream->uncomp_buf, sizeof(buf), buf);
+
+	count = 0;
 
 	snprintf(dst, dst_len, "%c%c%c%c-%c%c-%c%c",
 		buf[6], buf[7], buf[8], buf[9],
@@ -73,12 +82,53 @@ static int parse_date(struct stream *stream, char *dst, size_t dst_len)
 
 			nr = buffer_inflate(stream->comp_buf, stream->uncomp_buf, stream->zstream);
 			if (nr <= 0)
-				break;
+				return FILE_TYPE_UNKNOWN;
 		}
 
 		if (buffer_get_8(stream->uncomp_buf) == '\n')
 			break;
+
+		count++;
 	}
+
+	/* Drop CR and LF. */
+	switch (count - 2) {
+	case 83: /* Undocumented. */
+		return FILE_TYPE_DAILY_QUOTE;
+	case 82:
+		return FILE_TYPE_DAILY_QUOTE;
+	case 60:
+		return FILE_TYPE_DAILY_TRADE;
+	default:
+		return FILE_TYPE_UNKNOWN;
+	}
+}
+
+int nyse_taq_msg_daily_quote_read(struct stream *stream,
+	struct nyse_taq_msg_daily_quote **msg_p)
+{
+	struct nyse_taq_msg_daily_quote *msg;
+
+	*msg_p = NULL;
+
+retry_message:
+	msg = nyse_taq_msg_daily_quote_decode(stream->uncomp_buf);
+	if (!msg) {
+		ssize_t nr;
+
+		buffer_compact(stream->uncomp_buf);
+
+		nr = buffer_inflate(stream->comp_buf, stream->uncomp_buf, stream->zstream);
+		if (nr <= 0)
+			return nr;
+
+		if (stream->progress)
+			stream->progress(stream->comp_buf);
+
+		goto retry_message;
+	}
+
+	*msg_p = msg;
 
 	return 0;
 }
@@ -116,6 +166,26 @@ void nyse_taq_filter_init(struct nyse_taq_filter *filter, const char *symbol)
 {
 	memset(filter->symbol, ' ', sizeof(filter->symbol));
 	memcpy(filter->symbol, symbol, strlen(symbol));
+}
+
+static bool nyse_taq_session_filter_msg_daily_quote(struct nyse_taq_session *session,
+	struct nyse_taq_msg_daily_quote *msg)
+{
+	struct nyse_taq_filter *filter = &session->filter;
+
+	return !memcmp(msg->Symbol, filter->symbol, sizeof(filter->symbol));
+}
+
+static bool filter_msg_daily_quote_quote_condition(struct nyse_taq_msg_daily_quote *msg)
+{
+	switch (msg->QuoteCondition) {
+	case 'R':
+		return true;
+	case 'Y':
+		return true;
+	default:
+		return false;
+	}
 }
 
 static bool nyse_taq_session_filter_msg_daily_trade(struct nyse_taq_session *session,
@@ -173,8 +243,52 @@ static const char *trade_type(struct nyse_taq_msg_daily_trade *msg)
 	return TAQ_TRADE_TYPE_REGULAR;
 }
 
-#define TRADE_PRICE_INT_LEN		7
-#define TRADE_PRICE_FRACTION_LEN	4
+#define PRICE_INT_LEN		7
+#define PRICE_FRACTION_LEN	4
+
+static void nyse_taq_msg_daily_quote_write(struct nyse_taq_session *session,
+	struct nyse_taq_msg_daily_quote *msg)
+{
+	struct taq_event event;
+
+	if (!nyse_taq_session_filter_msg_daily_quote(session, msg))
+		return;
+
+	if (!filter_msg_daily_quote_quote_condition(msg))
+		return;
+
+	event = (struct taq_event) {
+		.type			= TAQ_EVENT_QUOTE,
+		.time			= (struct time) {
+			.value		= msg->Time,
+			.value_len	= sizeof(msg->Time),
+			.unit		= TIME_UNIT_MILLISECONDS,
+		},
+		.exchange		= mic[MIC_ID(msg->Exchange)],
+		.exchange_len		= MIC_LEN,
+		.symbol			= msg->Symbol,
+		.symbol_len		= sizeof(msg->Symbol),
+		.bid_quantity1		= msg->BidSize,
+		.bid_quantity1_len	= sizeof(msg->BidSize),
+		.bid_price1		= (struct decimal) {
+			.integer	= msg->BidPrice,
+			.integer_len	= PRICE_INT_LEN,
+			.fraction	= msg->BidPrice + PRICE_INT_LEN,
+			.fraction_len	= PRICE_FRACTION_LEN,
+		},
+		.ask_quantity1		= msg->AskSize,
+		.ask_quantity1_len	= sizeof(msg->AskSize),
+		.ask_price1		= (struct decimal) {
+			.integer	= msg->AskPrice,
+			.integer_len	= PRICE_INT_LEN,
+			.fraction	= msg->AskPrice + PRICE_INT_LEN,
+			.fraction_len	= PRICE_FRACTION_LEN,
+		},
+		.status_len		= 0,
+	};
+
+	taq_write_event(session->out_fd, &event);
+}
 
 static void nyse_taq_msg_daily_trade_write(struct nyse_taq_session *session,
 	struct nyse_taq_msg_daily_trade *msg)
@@ -205,15 +319,51 @@ static void nyse_taq_msg_daily_trade_write(struct nyse_taq_session *session,
 		.trade_quantity_len	= sizeof(msg->TradeVolume),
 		.trade_price		= (struct decimal) {
 			.integer	= msg->TradePrice,
-			.integer_len	= TRADE_PRICE_INT_LEN,
-			.fraction	= msg->TradePrice + TRADE_PRICE_INT_LEN,
-			.fraction_len	= TRADE_PRICE_FRACTION_LEN,
+			.integer_len	= PRICE_INT_LEN,
+			.fraction	= msg->TradePrice + PRICE_INT_LEN,
+			.fraction_len	= PRICE_FRACTION_LEN,
 		},
 		.trade_type		= trade_type(msg),
 		.trade_type_len		= TAQ_TRADE_TYPE_LEN,
 	};
 
 	taq_write_event(session->out_fd, &event);
+}
+
+static void process_daily_quotes(struct nyse_taq_session *session,
+	struct stream *stream)
+{
+	for (;;) {
+		struct nyse_taq_msg_daily_quote *msg;
+		int err;
+
+		err = nyse_taq_msg_daily_quote_read(stream, &msg);
+		if (err)
+			error("%s: %s", session->input_filename, strerror(err));
+
+		if (!msg)
+			break;
+
+		nyse_taq_msg_daily_quote_write(session, msg);
+	}
+}
+
+static void process_daily_trades(struct nyse_taq_session *session,
+	struct stream *stream)
+{
+	for (;;) {
+		struct nyse_taq_msg_daily_trade *msg;
+		int err;
+
+		err = nyse_taq_msg_daily_trade_read(stream, &msg);
+		if (err)
+			error("%s: %s", session->input_filename, strerror(err));
+
+		if (!msg)
+			break;
+
+		nyse_taq_msg_daily_trade_write(session, msg);
+	}
 }
 
 #define BUFFER_SIZE	(1ULL << 20) /* 1 MB */
@@ -226,6 +376,7 @@ void nyse_taq_taq(struct nyse_taq_session *session)
 	char date_buf[11];
 	unsigned int ndx;
 	struct taq_event event;
+	enum file_type file_type;
 
 	if (fstat(session->in_fd, &st) < 0)
 		error("%s: %s", session->input_filename, strerror(errno));
@@ -247,8 +398,9 @@ void nyse_taq_taq(struct nyse_taq_session *session)
 		.progress	= print_progress,
 	};
 
-	if (parse_date(&stream, date_buf, sizeof(date_buf)) < 0)
-		error("%s: Cannot parse date", session->input_filename);
+	file_type = parse_header(&stream, date_buf, sizeof(date_buf));
+	if (file_type == FILE_TYPE_UNKNOWN)
+		error("%s: Unknown file type", session->input_filename);
 
 	if (!session->date)
 		session->date = date_buf;
@@ -267,18 +419,17 @@ void nyse_taq_taq(struct nyse_taq_session *session)
 		taq_write_event(session->out_fd, &event);
 	}
 
-	for (;;) {
-		struct nyse_taq_msg_daily_trade *msg;
-		int err;
-
-		err = nyse_taq_msg_daily_trade_read(&stream, &msg);
-		if (err)
-			error("%s: %s", session->input_filename, strerror(err));
-
-		if (!msg)
-			break;
-
-		nyse_taq_msg_daily_trade_write(session, msg);
+	switch (file_type) {
+	case FILE_TYPE_DAILY_QUOTE:
+		process_daily_quotes(session, &stream);
+		break;
+	case FILE_TYPE_DAILY_TRADE:
+		process_daily_trades(session, &stream);
+		break;
+	case FILE_TYPE_UNKNOWN:
+		break;
+	default:
+		break;
 	}
 
 	buffer_munmap(comp_buf);
