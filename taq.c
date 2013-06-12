@@ -16,8 +16,8 @@ static const char *column_names[] = {
 	"TradeQuantity",
 	"TradePrice",
 	"TradeSide",
-	"Status",
 	"TradeType",
+	"Status",
 	"BidQuantity1",
 	"BidPrice1",
 	"AskQuantity1",
@@ -45,11 +45,11 @@ void taq_write_event(int fd, struct taq_event *event)
 	idx += dsv_fmt_decimal(buf + idx, &event->trade_price, '\t');
 	idx += dsv_fmt_value  (buf + idx, event->trade_side, event->trade_side_len, '\t');
 	idx += dsv_fmt_value  (buf + idx, event->trade_type, event->trade_type_len, '\t');
+	idx += dsv_fmt_value  (buf + idx, event->status, event->status_len, '\t');
 	idx += dsv_fmt_value  (buf + idx, event->bid_quantity1, event->bid_quantity1_len, '\t');
 	idx += dsv_fmt_decimal(buf + idx, &event->bid_price1, '\t');
 	idx += dsv_fmt_value  (buf + idx, event->ask_quantity1, event->ask_quantity1_len, '\t');
-	idx += dsv_fmt_decimal(buf + idx, &event->ask_price1, '\t');
-	idx += dsv_fmt_value  (buf + idx, event->status, event->status_len, '\n');
+	idx += dsv_fmt_decimal(buf + idx, &event->ask_price1, '\n');
 
 	write(fd, buf, idx);
 }
