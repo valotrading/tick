@@ -36,7 +36,7 @@ void taq_write_event(int fd, struct taq_event *event)
 
 	idx += dsv_fmt_char   (buf + idx, event->type, '\t');
 	idx += dsv_fmt_value  (buf + idx, event->date, event->date_len, '\t');
-	idx += dsv_fmt_value  (buf + idx, event->time, event->time_len, '\t');
+	idx += dsv_fmt_time   (buf + idx, &event->time, '\t');
 	idx += dsv_fmt_value  (buf + idx, event->time_zone, event->time_zone_len, '\t');
 	idx += dsv_fmt_value  (buf + idx, event->exchange, event->exchange_len, '\t');
 	idx += dsv_fmt_value  (buf + idx, event->symbol, event->symbol_len, '\t');

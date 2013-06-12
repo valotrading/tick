@@ -177,8 +177,11 @@ static void nyse_taq_msg_daily_trade_write(struct nyse_taq_session *session,
 
 	event = (struct taq_event) {
 		.type 			= TAQ_EVENT_TRADE,
-		.time 			= msg->Time,
-		.time_len		= sizeof(msg->Time),
+		.time			= (struct time) {
+			.value		= msg->Time,
+			.value_len	= sizeof(msg->Time),
+			.unit		= TIME_UNIT_MILLISECONDS,
+		},
 		.exchange		= mic[MIC_ID(msg->Exchange)],
 		.exchange_len		= MIC_LEN,
 		.symbol			= msg->Symbol,

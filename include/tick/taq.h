@@ -2,6 +2,7 @@
 #define TICK_TAQ_H
 
 #include "decimal.h"
+#include "time.h"
 
 /*
  * TAQ format
@@ -25,8 +26,7 @@ struct taq_event {
 	enum taq_event_type	type;
 	const char		*date;
 	unsigned long		date_len;
-	const char		*time;
-	unsigned long		time_len;
+	struct time		time;
 	const char		*time_zone;
 	unsigned long		time_zone_len;
 	const char		*exchange;
