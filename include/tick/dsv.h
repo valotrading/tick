@@ -2,6 +2,7 @@
 #define TICK_DSV_H
 
 #include "decimal.h"
+#include "time.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +31,32 @@ static inline size_t dsv_fmt_decimal(char *buf, struct decimal *decimal, char de
 		memcpy(buf + ret, decimal->fraction, decimal->fraction_len);
 
 		ret += decimal->fraction_len;
+	}
+
+	buf[ret++] = delim;
+
+	return ret;
+}
+
+static inline size_t dsv_fmt_time(char *buf, struct time *time, char delim)
+{
+	size_t ret = 0;
+
+	if (time->value) {
+		memcpy(buf, time->value, time->value_len);
+
+		ret += time->value_len;
+
+		switch (time->unit) {
+		case TIME_UNIT_MILLISECONDS:
+			memset(buf + ret, '0', 6);
+
+			ret += 6;
+
+			break;
+		case TIME_UNIT_NANOSECONDS:
+			break;
+		}
 	}
 
 	buf[ret++] = delim;
