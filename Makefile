@@ -95,6 +95,7 @@ BUILTIN_OBJS += ob.o
 BUILTIN_OBJS += progress.o
 BUILTIN_OBJS += stats.o
 BUILTIN_OBJS += taq.o
+BUILTIN_OBJS += tick.o
 
 #
 # Build rules
@@ -102,9 +103,9 @@ BUILTIN_OBJS += taq.o
 
 all: $(PROGRAMS)
 
-tick: tick.o $(BUILTIN_OBJS)
+tick: $(BUILTIN_OBJS)
 	$(E) "  LINK    " $@
-	$(Q) $(CC) $(ALL_CFLAGS) $(ALL_LDFLAGS) tick.o $(BUILTIN_OBJS) $(LIBS) -o $@
+	$(Q) $(CC) $(ALL_CFLAGS) $(ALL_LDFLAGS) $(BUILTIN_OBJS) $(LIBS) -o $@
 
 %.o: %.c
 	$(E) "  CC      " $@
