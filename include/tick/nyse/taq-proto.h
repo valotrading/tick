@@ -11,7 +11,11 @@ struct nyse_taq_filter {
 void nyse_taq_filter_init(struct nyse_taq_filter *filter, const char *symbol);
 
 struct stream;
+struct nyse_taq_msg_daily_quote;
 struct nyse_taq_msg_daily_trade;
+
+int nyse_taq_msg_daily_quote_read(struct stream *stream,
+	struct nyse_taq_msg_daily_quote **msg_p);
 
 int nyse_taq_msg_daily_trade_read(struct stream *stream,
 	struct nyse_taq_msg_daily_trade **msg_p);
@@ -26,8 +30,6 @@ struct nyse_taq_session {
 	const char		*time_zone;
 	size_t			time_zone_len;
 };
-
-int nyse_taq_parse_date(struct stream *stream, char *buf, size_t len);
 
 void nyse_taq_taq(struct nyse_taq_session *);
 
