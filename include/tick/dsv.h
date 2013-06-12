@@ -2,6 +2,8 @@
 #define TICK_DSV_H
 
 #include "decimal.h"
+#include "error.h"
+
 #include "time.h"
 
 #include <stdlib.h>
@@ -55,6 +57,9 @@ static inline size_t dsv_fmt_time(char *buf, struct time *time, char delim)
 
 			break;
 		case TIME_UNIT_NANOSECONDS:
+			break;
+		default:
+			error("%s: unknown time unit: %d", time->unit);
 			break;
 		}
 	}
