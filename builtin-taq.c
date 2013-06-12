@@ -1,5 +1,6 @@
 #include "tick/builtins.h"
 
+#include "tick/bats/pitch-proto.h"
 #include "tick/nyse/taq-proto.h"
 #include "tick/format.h"
 #include "tick/stream.h"
@@ -27,9 +28,11 @@ static void usage(void)
 "\n Supported file formats are:\n"					\
 "\n"									\
 "   %s\n"								\
+"   %s\n"								\
 "\n"
 	fprintf(stderr, FMT,
 			program,
+			format_names[FORMAT_BATS_PITCH_112],
 			format_names[FORMAT_NYSE_TAQ_17]);
 
 #undef FMT
@@ -138,7 +141,48 @@ int cmd_taq(int argc, char *argv[])
 		nyse_taq_taq(&session);
 		break;
 	}
-	case FORMAT_BATS_PITCH_112:
+	case FORMAT_BATS_PITCH_112: {
+		struct pitch_session session;
+		struct taq_event event;
+		char date_buf[11];
+
+		if (!date) {
+			if (pitch_file_parse_date(input_filename, date_buf, sizeof(date_buf)) < 0)
+				error("%s: unable to parse date from filename", input_filename);
+
+			date = date_buf;
+		}
+
+		session = (struct pitch_session) {
+			.zstream	= &stream,
+			.in_fd		= in_fd,
+			.out_fd		= out_fd,
+			.input_filename	= input_filename,
+			.time_zone	= "America/New_York",
+			.time_zone_len	= strlen("America/New_York"),
+			.exchange	= "BATS",
+			.exchange_len	= strlen("BATS"),
+			.symbol		= symbol,
+			.symbol_len	= strlen(symbol),
+		};
+
+		pitch_filter_init(&session.filter, symbol);
+
+		event = (struct taq_event) {
+			.type		= TAQ_EVENT_DATE,
+			.date		= date,
+			.date_len	= strlen(date),
+			.time_zone	= session.time_zone,
+			.time_zone_len	= session.time_zone_len,
+			.exchange	= session.exchange,
+			.exchange_len	= session.exchange_len,
+		};
+
+		taq_write_event(session.out_fd, &event);
+
+		bats_pitch_taq(&session);
+		break;
+	}
 	case FORMAT_NASDAQ_ITCH_41:
 	default:
 		error("%s is not a supported file format", format);
