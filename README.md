@@ -28,3 +28,11 @@ make install
 The ``tick`` executable is installed to ``$HOME/bin`` by default.
 
 [Libtrading]: http://www.libtrading.org/
+
+### Building Debian packages
+
+To build Debian package, run:
+
+```
+dpkg-buildpackage -uc -us -b -rfakeroot
+```
