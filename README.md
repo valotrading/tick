@@ -7,9 +7,16 @@ Tick is a tool for inspecting and converting market data files. It uses
 
 ### Exchange Coverage
 
-Exchange | OB
----------|------
-BATS     | PITCH
+Exchange    | OB         | TAQ
+------------|------------|---------
+BATS        | BATS PITCH | NYSE TAQ
+CBOE        |            | NYSE TAQ
+CHX         |            | NYSE TAQ
+Direct Edge |            | NYSE TAQ
+ISE         |            | NYSE TAQ
+NASDAQ      |            | NYSE TAQ
+NSX         |            | NYSE TAQ
+NYSE        |            | NYSE TAQ
 
 ## Building Tick
 
