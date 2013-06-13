@@ -9,7 +9,7 @@ Tick is a tool for inspecting and converting market data files. It uses
 
 Exchange    | OB         | TAQ
 ------------|------------|---------
-BATS        | BATS PITCH | NYSE TAQ
+BATS        | BATS PITCH | BATS PITCH (trades only), NYSE TAQ
 CBOE        |            | NYSE TAQ
 CHX         |            | NYSE TAQ
 Direct Edge |            | NYSE TAQ
