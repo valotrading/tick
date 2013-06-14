@@ -22,6 +22,8 @@ struct pitch_session {
 	int			in_fd;
 	int			out_fd;
 	const char		*input_filename;
+	const char		*date;
+	unsigned long		date_len;
 	const char		*exchange;
 	unsigned long		exchange_len;
 	const char		*time_zone;

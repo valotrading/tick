@@ -129,7 +129,6 @@ int cmd_ob(int argc, char *argv[])
 	switch (fmt) {
 	case FORMAT_BATS_PITCH_112: {
 		struct pitch_session session;
-		struct ob_event event;
 		char date_buf[11];
 
 		if (!date) {
@@ -146,6 +145,8 @@ int cmd_ob(int argc, char *argv[])
 			.input_filename	= input_filename,
 			.time_zone	= "America/New_York",
 			.time_zone_len	= strlen("America/New_York"),
+			.date		= date,
+			.date_len	= strlen(date),
 			.exchange	= "BATS",
 			.exchange_len	= strlen("BATS"),
 			.symbol		= symbol,
@@ -153,18 +154,6 @@ int cmd_ob(int argc, char *argv[])
 		};
 
 		pitch_filter_init(&session.filter, symbol);
-
-		event = (struct ob_event) {
-			.type		= OB_EVENT_DATE,
-			.date		= date,
-			.date_len	= strlen(date),
-			.time_zone	= session.time_zone,
-			.time_zone_len	= session.time_zone_len,
-			.exchange	= session.exchange,
-			.exchange_len	= session.exchange_len,
-		};
-
-		ob_write_event(session.out_fd, &event);
 
 		bats_pitch_ob(&session);
 

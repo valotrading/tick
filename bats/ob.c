@@ -359,6 +359,7 @@ found:
 void bats_pitch_ob(struct pitch_session *session)
 {
 	struct buffer *comp_buf, *uncomp_buf;
+	struct ob_event event;
 	struct stream stream;
 	struct stat st;
 
@@ -389,6 +390,18 @@ void bats_pitch_ob(struct pitch_session *session)
 	session->order_hash = g_hash_table_new(g_int_hash, g_int_equal);
 	if (!session->order_hash)
 		error("out of memory");
+
+	event = (struct ob_event) {
+		.type		= OB_EVENT_DATE,
+		.date		= session->date,
+		.date_len	= session->date_len,
+		.time_zone	= session->time_zone,
+		.time_zone_len	= session->time_zone_len,
+		.exchange	= session->exchange,
+		.exchange_len	= session->exchange_len,
+	};
+
+	ob_write_event(session->out_fd, &event);
 
 	for (;;) {
 		struct pitch_message *msg;
