@@ -1,5 +1,6 @@
 #include "tick/builtins.h"
 
+#include "tick/nasdaq/itch-proto.h"
 #include "tick/bats/pitch-proto.h"
 #include "tick/format.h"
 #include "tick/error.h"
@@ -28,10 +29,12 @@ static void usage(void)
 "\n Supported file formats are:\n"					\
 "\n"									\
 "   %s\n"								\
+"   %s\n"								\
 "\n"
 	fprintf(stderr, FMT,
 			program,
-			format_names[FORMAT_BATS_PITCH_112]);
+			format_names[FORMAT_BATS_PITCH_112],
+			format_names[FORMAT_NASDAQ_ITCH_41]);
 
 #undef FMT
 
@@ -159,7 +162,38 @@ int cmd_ob(int argc, char *argv[])
 
 		break;
 	}
-	case FORMAT_NASDAQ_ITCH_41:
+	case FORMAT_NASDAQ_ITCH_41: {
+		struct nasdaq_itch_session session;
+		char date_buf[11];
+
+		if (!date) {
+			if (nasdaq_itch_file_parse_date(input_filename, date_buf, sizeof(date_buf)) < 0)
+				error("%s: unable to parse date from filename", input_filename);
+
+			date = date_buf;
+		}
+
+		session = (struct nasdaq_itch_session) {
+			.zstream	= &stream,
+			.in_fd		= in_fd,
+			.out_fd		= out_fd,
+			.input_filename	= input_filename,
+			.time_zone	= "America/New_York",
+			.time_zone_len	= strlen("America/New_York"),
+			.date		= date,
+			.date_len	= strlen(date),
+			.exchange	= "XNAS",
+			.exchange_len	= strlen("XNAS"),
+			.symbol		= symbol,
+			.symbol_len	= strlen(symbol),
+		};
+
+		nasdaq_itch_filter_init(&session.filter, symbol);
+
+		nasdaq_itch_ob(&session);
+
+		break;
+	}
 	case FORMAT_NYSE_TAQ_17:
 	default:
 		error("%s is not a supported file format", format);
