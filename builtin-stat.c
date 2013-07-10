@@ -96,7 +96,8 @@ int cmd_stat(int argc, char *argv[])
 	parse_args(argc - 1, argv + 1);
 
 	if (!format)
-		error("%s: unsupported file format", filename);
+		error("%s: file format not detected. Please specify it with the '-f' option.",
+			filename);
 
 	init_stream(&stream);
 

@@ -110,7 +110,8 @@ int cmd_ob(int argc, char *argv[])
 	parse_args(argc - 1, argv + 1);
 
 	if (!format)
-		error("%s: unsupported file format", input_filename);
+		error("%s: file format not detected. Please specify it with the '-f' option.",
+			input_filename);
 
 	if (!symbol)
 		error("symbol not specified");
